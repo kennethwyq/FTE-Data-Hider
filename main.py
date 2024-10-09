@@ -23,6 +23,9 @@ def create_fake_registry_key():
     winreg.SetValueEx(key, "InstallLocation", 0, winreg.REG_SZ, r"C:\Program Files\Fake Software")
     winreg.CloseKey(key)
 
+def clean_up_registry():
+    winreg.DeleteKey(winreg.HKEY_CURRENT_USER, REG_PATH)
+
 # Function to generate a new AES key and split it into parts using SSS
 def generate_secret_key():
     key = get_random_bytes(AES_KEY_SIZE)
