@@ -39,7 +39,7 @@ def hide_data_in_png(image_path, secret_data):
 
     # Save the modified image
     img.putdata(pixels)
-    modified_image_path = "images/image_with_hidden_data2.png"
+    modified_image_path = "image_with_hidden_data2.png"
     img.save(modified_image_path)
     print(f"Modified image saved as: {modified_image_path}")
 
