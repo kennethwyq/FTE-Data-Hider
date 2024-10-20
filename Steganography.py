@@ -11,7 +11,7 @@ def bin_to_int(binary_value):
 
 # LSB encoding for PNG with proper RGBA handling
 def hide_data_in_png(image_path, secret_data):
-    """Hide data in PNG image using LSB encoding."""
+    """Hide data in PNG image using LSB encoding and save it back to the original image."""
     img = Image.open(image_path)
     pixels = list(img.getdata())
 
@@ -37,14 +37,12 @@ def hide_data_in_png(image_path, secret_data):
         print(f"Embedding bit {bit} at pixel {pixel_index}, red channel before: {r & ~1}, after: {r}")
         pixel_index += 1
 
-    # Save the modified image
+    # Save the modified image back to the original file
     img.putdata(pixels)
-    modified_image_path = "image_with_hidden_data2.png"
-    img.save(modified_image_path)
-    print(f"Modified image saved as: {modified_image_path}")
+    img.save(image_path)
+    print(f"Data hidden successfully in the original image: {image_path}")
 
     return True
-
 
 def extract_data_from_png(image_path, data_length):
     """Extract hidden data from PNG image."""
