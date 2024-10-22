@@ -8,6 +8,7 @@ from Steganography import hide_data_in_png, extract_data_from_png  # Import PNG 
 
 REG_PATH = r"SOFTWARE\f3832454-4e14-a1b9-0f614e507aa5"
 AES_KEY_SIZE = 32  # 256 bits for AES-256
+IV_SIZE = 16
 THRESHOLD = 3  # Minimum number of shares required to recover the key
 TOTAL_SHARES = 5  # Total number of shares
 
@@ -26,15 +27,24 @@ def create_fake_registry_key():
 def clean_up_registry():
     winreg.DeleteKey(winreg.HKEY_CURRENT_USER, REG_PATH)
 
+def check_registry_for_key():
+    try:
+        key =  winreg.OpenKey(winreg.HKEY_CURRENT_USER, REG_PATH, 0, winreg.KEY_READ)
+        return True
+    except FileNotFoundError:
+        return False
+
 # Function to generate a new AES key and split it into parts using SSS
 def generate_secret_key():
     key = get_random_bytes(AES_KEY_SIZE)
     print(f"Generated AES Key: {key.hex()}")
-    return key
+    iv = get_random_bytes(IV_SIZE)
+    return key, iv
 
-def split_and_store_key(key):
+def split_and_store_key(key,iv):
     key_parts_1 = Shamir.split(THRESHOLD, TOTAL_SHARES, key[:16])
     key_parts_2 = Shamir.split(THRESHOLD, TOTAL_SHARES, key[16:])
+    iv_parts = Shamir.split(THRESHOLD, TOTAL_SHARES, iv)
     
     # Create fake registry key (anti-forensics)
     create_fake_registry_key()
@@ -48,10 +58,15 @@ def split_and_store_key(key):
         reg_name = f"Config{idx}"
         with winreg.CreateKey(winreg.HKEY_CURRENT_USER, REG_PATH) as reg_key:
             winreg.SetValueEx(reg_key, reg_name, 0, winreg.REG_SZ, hexlify(part).decode())
+    for idx, part in iv_parts:
+        reg_name = f"Temp{idx}"
+        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, REG_PATH) as reg_key:
+            winreg.SetValueEx(reg_key, reg_name, 0, winreg.REG_SZ, hexlify(part).decode())
 
 def retrieve_key_from_registry():
     key_parts_1 = []
     key_parts_2 = []
+    iv_parts = []
     with winreg.OpenKey(winreg.HKEY_CURRENT_USER, REG_PATH, 0, winreg.KEY_READ) as reg_key:
         for idx in range(1, TOTAL_SHARES + 1):
             try:
@@ -66,20 +81,31 @@ def retrieve_key_from_registry():
                 key_parts_2.append((idx, unhexlify(part)))
             except FileNotFoundError:
                 pass
-    return key_parts_1, key_parts_2
+            try:
+                reg_name = f"Temp{idx}"
+                part, _ = winreg.QueryValueEx(reg_key, reg_name)
+                iv_parts.append((idx, unhexlify(part)))
+            except FileNotFoundError:
+                pass
+    return key_parts_1, key_parts_2, iv_parts
 
-def reconstruct_key(key_parts_1, key_parts_2):
-    if len(key_parts_1) >= THRESHOLD and len(key_parts_2) >= THRESHOLD:
+def reconstruct_key():
+    key_parts_1, key_parts_2, iv_parts = retrieve_key_from_registry()
+    if len(key_parts_1) >= THRESHOLD and len(key_parts_2) >= THRESHOLD and len(iv_parts) >= THRESHOLD:
         key_part_1 = Shamir.combine(key_parts_1)
         key_part_2 = Shamir.combine(key_parts_2)
-        return key_part_1 + key_part_2
+        iv_parts = Shamir.combine(iv_parts)
+        return key_part_1 + key_part_2, iv_parts
     else:
         print("Number of shares is less than the required threshold.")
         sys.exit(1)
 
 # Encrypt and hide data in PNG
 def hide_mode(data, image_path):
-    key = generate_secret_key()
+    if not check_registry_for_key():
+        key, iv = generate_secret_key()
+        split_and_store_key(key, iv)
+    key, iv = reconstruct_key()
 
     # Encrypt the data using AES
     cipher = AES.new(key, AES.MODE_EAX)
@@ -134,7 +160,6 @@ def unhide_mode(image_path):
         print(f"Decryption failed: {e}")
 
 # Main function
-print("Starting the script...")
 
 def main():
     print(f"Arguments passed: {sys.argv}")
