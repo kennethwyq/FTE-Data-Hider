@@ -6,7 +6,7 @@ import numpy as np
 #Files
 import dctZigZag as zigzag
 import dct as dct
-import dctEncode as encode
+import dctEmbed_Extract as encode
 
 NUM_CHANNELS = 3
 COVER_IMAGE_FILEPATH  = "./images/gnar.jpg"

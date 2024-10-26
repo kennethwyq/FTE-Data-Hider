@@ -5,7 +5,7 @@ import numpy as np
 
 # Files
 import dctZigZag as zigzag
-import dctEncode as encode
+import dctEmbed_Extract as encode
 import dctMain as main
 import dct as dct
 
