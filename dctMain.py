@@ -10,12 +10,13 @@ import dct as dct
 import dctEncode as encode
 
 NUM_CHANNELS = 3
-COVER_IMAGE_FILEPATH  = "./images/cat.png" # Choose cover image
-STEGO_IMAGE_FILEPATH  = "./images/stego_cat.png"
+COVER_IMAGE_FILEPATH  = "./images/gnar.jpg"
+STEGO_IMAGE_FILEPATH  = "./images/stego_gnar.jpg"
 SECRET_MESSAGE_STRING = "secret"
 
 raw_cover_image = cv2.imread(COVER_IMAGE_FILEPATH, flags=cv2.IMREAD_COLOR)
 height, width   = raw_cover_image.shape[:2]
+
 # Force Image Dimensions to be 8x8 compliant
 while(height % 8): height += 1 # Rows
 while(width  % 8): width  += 1 # Cols
@@ -26,6 +27,17 @@ cover_image_YCC = dct.YCC_Image(cv2.cvtColor(cover_image_f32, cv2.COLOR_BGR2YCrC
 
 # Placeholder for holding stego image data
 stego_image = np.empty_like(cover_image_f32)
+
+#Function to log secret message bits
+def log_secret_message_bits(secret_message):
+    secret_data = ""
+    for char in secret_message.encode('ascii'):
+        secret_data += bitstring.pack('uint:8', char)
+    print(f"Original secret message bits: {secret_data.bin}")  # Log the bitstream
+    return secret_data
+
+secret_data = log_secret_message_bits(SECRET_MESSAGE_STRING)
+print(f"Original secret message bits: {secret_data}")  # Log the bitstream before embedding
 
 for chan_index in range(NUM_CHANNELS):
     # FORWARD DCT STAGE
@@ -41,7 +53,8 @@ for chan_index in range(NUM_CHANNELS):
     if (chan_index == 0):
         # DATA INSERTION STAGE
         secret_data = ""
-        for char in SECRET_MESSAGE_STRING.encode('ascii'): secret_data += bitstring.pack('uint:8', char)
+        for char in SECRET_MESSAGE_STRING.encode('ascii'):
+            secret_data += bitstring.pack('uint:8', char)
         embedded_dct_blocks   = encode.embed_encoded_data_dct(secret_data, sorted_coefficients)
         desorted_coefficients = [zigzag.inverse_zigzag(block, vmax=8,hmax=8) for block in embedded_dct_blocks]
     else:
