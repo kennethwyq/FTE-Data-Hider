@@ -1,6 +1,5 @@
 #Libraries
 import cv2
-import struct
 import bitstring
 import numpy as np
 
@@ -11,7 +10,7 @@ import dctEncode as encode
 
 NUM_CHANNELS = 3
 COVER_IMAGE_FILEPATH  = "./images/gnar.jpg"
-STEGO_IMAGE_FILEPATH  = "./images/stego_gnar.jpg"
+STEGO_IMAGE_FILEPATH  = "../images/stego_gnar.jpg"
 SECRET_MESSAGE_STRING = "secret"
 
 raw_cover_image = cv2.imread(COVER_IMAGE_FILEPATH, flags=cv2.IMREAD_COLOR)
@@ -68,7 +67,8 @@ for chan_index in range(NUM_CHANNELS):
     inverse_dct_blocks = [cv2.idct(block) for block in dct_quantization]
 
     # Rebuild full image channel
-    stego_image[:,:,chan_index] = np.asarray(dct.stitch_8x8_blocks_back_together(cover_image_YCC.width, inverse_dct_blocks))
+    stego_image[:,:,chan_index] = np.asarray(
+        dct.stitch_8x8_blocks_back_together(cover_image_YCC.width, inverse_dct_blocks))
 
 # Convert back to RGB (BGR) Colorspace
 stego_image_BGR = cv2.cvtColor(stego_image, cv2.COLOR_YCR_CB2BGR)

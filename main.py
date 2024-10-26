@@ -6,8 +6,7 @@ from binascii import hexlify, unhexlify
 from Cryptodome.Cipher import AES
 from Cryptodome.Random import get_random_bytes
 from Cryptodome.Protocol.SecretSharing import Shamir
-from Steganography import (
-    hide_data_in_png,
+from LSB.LSB import (
     extract_data_from_png,
 )  # Import PNG functions
 
@@ -146,7 +145,7 @@ def hide_mode(steg_technique, data):
     splitted_data = [1,2] # temp values for testing
 
     # Create a Path object for the folder
-    path = Path("steg_mediums") #TODO: let user choose which folder of files to use as hiding medium or default
+    path = Path("images") #TODO: let user choose which folder of files to use as hiding medium or default
     
     list_of_used_files = []
 
