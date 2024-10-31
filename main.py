@@ -136,13 +136,21 @@ def hide_mode(steg_technique, data):
         split_and_store_key(key, iv)
     key, iv = reconstruct_key()
 
-    # TODO: Encrypt the data using AES (Andersen)
-    # cipher = AES.new(key, AES.MODE_EAX)
-    # ciphertext, tag = cipher.encrypt_and_digest(data.encode("utf-8"))
-    # nonce = cipher.nonce
+    file_path = data
+
+    with open(file_path, 'rb') as file:
+        file_data = file.read()
+
+    cipher = AES.new(key, AES.MODE_EAX)
+    ciphertext, tag = cipher.encrypt_and_digest(file_data)
+    print(file_data)
+    nonce = cipher.nonce
 
     #TODO: Split Data (Andersen)
-    splitted_data = [1,2] # temp values for testing
+    
+    # Split the ciphertext into chunks of 32 bytes each
+    chunk_size = 32 
+    chunks = [ciphertext[i:i + chunk_size] for i in range(0, len(ciphertext), chunk_size)]
 
     # Create a Path object for the folder
     path = Path("images") #TODO: let user choose which folder of files to use as hiding medium or default
@@ -229,6 +237,17 @@ def unhide_mode(image_path):
         print(f"Decrypted data: {decrypted_data.decode('utf-8')}")
     except ValueError as e:
         print(f"Decryption failed: {e}")
+
+def wipe_file(file_path):
+    with open(file_path, 'r+b') as file:
+        file.seek(0, 2) 
+        size = file.tell()  
+        
+        file.seek(0)
+        
+        file.write(b'\x00' * size)
+        
+        file.truncate()
 
 
 # Main function
