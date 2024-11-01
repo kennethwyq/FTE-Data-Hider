@@ -147,10 +147,12 @@ def hide_mode(steg_technique, data):
     nonce = cipher.nonce
 
     #TODO: Split Data (Andersen)
-    
+    if sys.argv[2].lower() == "default":
     # Split the ciphertext into chunks of 32 bytes each
-    chunk_size = 32 
-    chunks = [ciphertext[i:i + chunk_size] for i in range(0, len(ciphertext), chunk_size)]
+        chunk_size = 32 
+        chunks = [ciphertext[i:i + chunk_size] for i in range(0, len(ciphertext), chunk_size)]
+
+    splitted_data = ciphertext
 
     # Create a Path object for the folder
     path = Path("images") #TODO: let user choose which folder of files to use as hiding medium or default
