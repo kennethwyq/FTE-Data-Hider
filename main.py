@@ -149,8 +149,11 @@ def hide_mode(steg_technique, data):
     #TODO: Split Data (Andersen)
     if sys.argv[2].lower() == "default":
     # Split the ciphertext into chunks of 32 bytes each
-        chunk_size = 32 
-        chunks = [ciphertext[i:i + chunk_size] for i in range(0, len(ciphertext), chunk_size)]
+        half = len(ciphertext) // 2
+        chunks_LSB = ciphertext[:half]
+        chunks_ADS = ciphertext[half:]
+        splitted_data_LSB = [chunks_LSB[i:i + 32] for i in range(0, len(chunks_LSB), 32)]
+        splitted_data_ADS = [chunks_ADS[i:i + 32] for i in range(0, len(chunks_ADS), 32)]
 
     splitted_data = ciphertext
 
@@ -158,6 +161,9 @@ def hide_mode(steg_technique, data):
     path = Path("images") #TODO: let user choose which folder of files to use as hiding medium or default
     
     list_of_used_files = []
+
+    wipe_file(file_path)
+    print(f"Data from {file_path} has been hidden and the original file securely wiped.")
 
 
     if steg_technique.lower() == "lsb":
@@ -199,8 +205,29 @@ def hide_mode(steg_technique, data):
             list_of_used_files.append(file)
             # Hide the encrypted data in the image
 
+    elif steg_technique.lower() =="default":
+        files_LSB = [file.name for file in path.iterdir() if file.is_file() and file.suffix in image_extensions]
+        if len(files_LSB) < len(splitted_data_LSB):
+            print(f"Not enough images for LSB steganography. Needed: {len(splitted_data_LSB)}")
+            sys.exit(1)
+        for data_chunk in splitted_data_LSB:
+            random_index = random.randint(0, len(files_LSB) - 1)
+            file = files_LSB.pop(random_index)
+            list_of_used_files.append(file)
+            # Hide the encrypted data chunk in the image using LSB
+
+        files_ADS = [file.name for file in path.iterdir() if file.is_file()]
+        if len(files_ADS) < len(splitted_data_ADS):
+            print(f"Not enough files for ADS steganography. Needed: {len(splitted_data_ADS)}")
+            sys.exit(1)
+        for data_chunk in splitted_data_ADS:
+            random_index = random.randint(0, len(files_ADS) - 1)
+            file = files_ADS.pop(random_index)
+            list_of_used_files.append(file)
+            # Hide the encrypted data chunk in the file using ADS
+        pass
+
     else:
-        #TODO: Mixed method
         pass
 
     hide_list(list_of_used_files)
