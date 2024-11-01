@@ -143,7 +143,6 @@ def hide_mode(steg_technique, data):
 
     cipher = AES.new(key, AES.MODE_EAX)
     ciphertext, tag = cipher.encrypt_and_digest(file_data)
-    print(file_data)
     nonce = cipher.nonce
 
     #TODO: Split Data (Andersen)
