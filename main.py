@@ -149,17 +149,23 @@ def hide_mode(steg_technique, data):
     if sys.argv[2].lower() == "default":
     # Split the ciphertext into chunks of 32 bytes each
         half = len(ciphertext) // 2
-        chunks_LSB = ciphertext[:half]
+        chunks_DCT = ciphertext[:half]
         chunks_ADS = ciphertext[half:]
-        splitted_data_LSB = [chunks_LSB[i:i + 32] for i in range(0, len(chunks_LSB), 32)]
+        splitted_data_DCT = [chunks_DCT[i:i + 32] for i in range(0, len(chunks_DCT), 32)]
         splitted_data_ADS = [chunks_ADS[i:i + 32] for i in range(0, len(chunks_ADS), 32)]
+        list_of_used_files = ["sample.png","sample2.png","sample3.png","sample4.png"]
+    else:
+        list_of_used_files = ["sample.png","sample2.png"]
 
-    splitted_data = ciphertext
+
+    splitted_data = splitted_data[ciphertext]
 
     # Create a Path object for the folder
     path = Path("images") #TODO: let user choose which folder of files to use as hiding medium or default
     
-    list_of_used_files = []
+    with open('order.txt', "w") as file:
+        file.write(list_of_used_files)
+        file.close()
 
     wipe_file(file_path)
     print(f"Data from {file_path} has been hidden and the original file securely wiped.")
@@ -205,17 +211,17 @@ def hide_mode(steg_technique, data):
             # Hide the encrypted data in the image
 
     elif steg_technique.lower() =="default":
-        files_LSB = [file.name for file in path.iterdir() if file.is_file() and file.suffix in image_extensions]
-        if len(files_LSB) < len(splitted_data_LSB):
-            print(f"Not enough images for LSB steganography. Needed: {len(splitted_data_LSB)}")
+        files_LSB = list_of_used_files[0:1]
+        if len(files_LSB) < len(splitted_data_DCT):
+            print(f"Not enough images for LSB steganography. Needed: {len(splitted_data_DCT)}")
             sys.exit(1)
-        for data_chunk in splitted_data_LSB:
+        for data_chunk in splitted_data_DCT:
             random_index = random.randint(0, len(files_LSB) - 1)
             file = files_LSB.pop(random_index)
             list_of_used_files.append(file)
             # Hide the encrypted data chunk in the image using LSB
 
-        files_ADS = [file.name for file in path.iterdir() if file.is_file()]
+        files_ADS = list_of_used_files[2:3]
         if len(files_ADS) < len(splitted_data_ADS):
             print(f"Not enough files for ADS steganography. Needed: {len(splitted_data_ADS)}")
             sys.exit(1)
@@ -270,11 +276,8 @@ def wipe_file(file_path):
     with open(file_path, 'r+b') as file:
         file.seek(0, 2) 
         size = file.tell()  
-        
         file.seek(0)
-        
         file.write(b'\x00' * size)
-        
         file.truncate()
 
 
