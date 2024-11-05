@@ -137,7 +137,7 @@ def hide_mode(steg_technique, data, number_of_files):
     key, iv = reconstruct_key()
 
     file_path = data
-
+    number_of_files = int(number_of_files)
     with open(file_path, 'rb') as file:
         file_data = file.read()
 
@@ -154,17 +154,22 @@ def hide_mode(steg_technique, data, number_of_files):
         splitted_data_DCT = [chunks_DCT[i:i + 32] for i in range(0, len(chunks_DCT), 32)]
         splitted_data_ADS = [chunks_ADS[i:i + 32] for i in range(0, len(chunks_ADS), 32)]
 
+    path = Path("images") #TODO: let user choose which folder of files to use as hiding medium or default
+    
     list_of_used_files = [file.name for file in path.iterdir() if file.is_file() and file.suffix in image_extensions]
     list_of_used_files = list_of_used_files[:number_of_files]
 
-    splitted_data = splitted_data[ciphertext]
+    splitted_data = [ciphertext]
     split_point = (number_of_files + 1) // 2 
 
     # Create a Path object for the folder
-    path = Path("images") #TODO: let user choose which folder of files to use as hiding medium or default
     
     with open('order.txt', "w") as file:
-        file.write(list_of_used_files)
+        for i, files in enumerate(list_of_used_files):
+            if i < len(list_of_used_files) - 1:
+                file.write(files + ',')
+            else:
+                file.write(files)
         file.close()
 
     wipe_file(file_path)
