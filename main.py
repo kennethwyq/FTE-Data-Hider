@@ -130,7 +130,7 @@ def reconstruct_key():
 
 
 # Encrypt and hide data in PNG
-def hide_mode(steg_technique, data):
+def hide_mode(steg_technique, data, number_of_files):
     if not check_registry_for_key():
         key, iv = generate_secret_key()
         split_and_store_key(key, iv)
@@ -153,12 +153,12 @@ def hide_mode(steg_technique, data):
         chunks_ADS = ciphertext[half:]
         splitted_data_DCT = [chunks_DCT[i:i + 32] for i in range(0, len(chunks_DCT), 32)]
         splitted_data_ADS = [chunks_ADS[i:i + 32] for i in range(0, len(chunks_ADS), 32)]
-        list_of_used_files = ["sample.png","sample2.png","sample3.png","sample4.png"]
-    else:
-        list_of_used_files = ["sample.png","sample2.png"]
 
+    list_of_used_files = [file.name for file in path.iterdir() if file.is_file() and file.suffix in image_extensions]
+    list_of_used_files = list_of_used_files[:number_of_files]
 
     splitted_data = splitted_data[ciphertext]
+    split_point = (number_of_files + 1) // 2 
 
     # Create a Path object for the folder
     path = Path("images") #TODO: let user choose which folder of files to use as hiding medium or default
@@ -173,7 +173,7 @@ def hide_mode(steg_technique, data):
 
     if steg_technique.lower() == "lsb":
         # List comprehension to retrieve file names
-        files = [file.name for file in path.iterdir() if file.is_file() and file.suffix in image_extensions]
+        files = list_of_used_files
         if len(files) != len(splitted_data):
             print(f"Not enough images to be used. Number of images needed is {len(splitted_data)}.")
             sys.exit(1)
@@ -187,7 +187,7 @@ def hide_mode(steg_technique, data):
     elif steg_technique.lower() == "dct":
         #TODO: Eddie
         # List comprehension to retrieve file names
-        files = [file.name for file in path.iterdir() if file.is_file() and file.suffix in image_extensions]
+        files = list_of_used_files
         if len(files) != len(splitted_data):
             print(f"Not enough images to be used. Number of images needed is {len(splitted_data)}.")
             sys.exit(1)
@@ -200,7 +200,7 @@ def hide_mode(steg_technique, data):
     elif steg_technique.lower() == "ads":
         #TODO: Eric
         # List comprehension to retrieve file names 
-        files = [file.name for file in path.iterdir() if file.is_file()]
+        files = list_of_used_files
         if len(files) != len(splitted_data):
             print(f"Not enough files to be used. Number of files needed is {len(splitted_data)}.")
             sys.exit(1)
@@ -211,7 +211,7 @@ def hide_mode(steg_technique, data):
             # Hide the encrypted data in the image
 
     elif steg_technique.lower() =="default":
-        files_LSB = list_of_used_files[0:1]
+        files_LSB = list_of_used_files[:split_point]
         if len(files_LSB) < len(splitted_data_DCT):
             print(f"Not enough images for LSB steganography. Needed: {len(splitted_data_DCT)}")
             sys.exit(1)
@@ -221,7 +221,7 @@ def hide_mode(steg_technique, data):
             list_of_used_files.append(file)
             # Hide the encrypted data chunk in the image using LSB
 
-        files_ADS = list_of_used_files[2:3]
+        files_ADS = list_of_used_files[split_point:]
         if len(files_ADS) < len(splitted_data_ADS):
             print(f"Not enough files for ADS steganography. Needed: {len(splitted_data_ADS)}")
             sys.exit(1)
@@ -284,14 +284,14 @@ def wipe_file(file_path):
 # Main function
 def main():
     print(f"Arguments passed: {sys.argv}")
-    if len(sys.argv) < 3:
-        print("Usage for hide mode: python main.py hide <steg_technique> <data>")
-        print("Usage for unhide mode: python main.py unhide <file>")
+    if len(sys.argv) < 4:
+        print("Usage for hide mode: python main.py hide <steg_technique> <data> <number of files>")
+        print("Usage for unhide mode: python main.py unhide <files>")
         sys.exit(1)
 
     if sys.argv[1] == "hide":
         print("Entering hide mode")
-        hide_mode(sys.argv[2],sys.argv[3])
+        hide_mode(sys.argv[2],sys.argv[3], sys.argv[4])
     elif sys.argv[1] == "unhide":
         print("Entering unhide mode")
         unhide_mode(sys.argv[2])
