@@ -129,6 +129,20 @@ def reconstruct_key():
         sys.exit(1)
 
 
+def split_byte_data(data, num_parts):
+    part_size = len(data) // num_parts
+    remainder = len(data) % num_parts 
+
+    parts = []
+    start = 0
+    
+    for i in range(num_parts):
+        end = start + part_size + (1 if i < remainder else 0)
+        parts.append(data[start:end]) 
+        start = end
+    
+    return parts
+
 # Encrypt and hide data in PNG
 def hide_mode(steg_technique, data, number_of_files):
     if not check_registry_for_key():
@@ -159,11 +173,11 @@ def hide_mode(steg_technique, data, number_of_files):
     list_of_used_files = [file.name for file in path.iterdir() if file.is_file() and file.suffix in image_extensions]
     list_of_used_files = list_of_used_files[:number_of_files]
 
-    splitted_data = [ciphertext]
     split_point = (number_of_files + 1) // 2 
-
-    # Create a Path object for the folder
     
+    splitted_data = split_byte_data(ciphertext, number_of_files)
+
+
     with open('order.txt', "w") as file:
         for i, files in enumerate(list_of_used_files):
             if i < len(list_of_used_files) - 1:
