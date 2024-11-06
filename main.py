@@ -6,18 +6,17 @@ from binascii import hexlify, unhexlify
 from Cryptodome.Cipher import AES
 from Cryptodome.Random import get_random_bytes
 from Cryptodome.Protocol.SecretSharing import Shamir
-from LSB.LSB import (
-    extract_data_from_png,
-)  # Import PNG functions
+import LSB.LSB as lsb
+import ADS.ads as ads
+import DCT.dctMain as dct
+import EOI.jpegeoi as eoi
+
 
 REG_PATH = r"SOFTWARE\f3832454-4e14-a1b9-0f614e507aa5"
 AES_KEY_SIZE = 32  # 256 bits for AES-256
 IV_SIZE = 16
 THRESHOLD = 3  # Minimum number of shares required to recover the key
 TOTAL_SHARES = 5  # Total number of shares
-LIST_OF_FILES = ['sample2.png', 'sample.png']
-FILENAME = "main.py"
-image_extensions = ['.jpeg', '.jpg', '.png']
 
 
 # Function to create fake software registry keys
@@ -144,92 +143,74 @@ def split_byte_data(data, num_parts):
     return parts
 
 # Encrypt and hide data in PNG
-def hide_mode(steg_technique, data, number_of_files):
+def hide_mode(steg_technique, path_of_data, number_of_files):
     if not check_registry_for_key():
         key, iv = generate_secret_key()
         split_and_store_key(key, iv)
     key, iv = reconstruct_key()
 
-    file_path = data
     number_of_files = int(number_of_files)
-    with open(file_path, 'rb') as file:
+    with open(path_of_data, 'rb') as file:
         file_data = file.read()
 
     cipher = AES.new(key, AES.MODE_EAX)
     ciphertext, tag = cipher.encrypt_and_digest(file_data)
     nonce = cipher.nonce
 
-    #TODO: Split Data (Andersen)
-    if sys.argv[2].lower() == "default":
-    # Split the ciphertext into chunks of 32 bytes each
-        half = len(ciphertext) // 2
-        chunks_DCT = ciphertext[:half]
-        chunks_ADS = ciphertext[half:]
-        splitted_data_DCT = [chunks_DCT[i:i + 32] for i in range(0, len(chunks_DCT), 32)]
-        splitted_data_ADS = [chunks_ADS[i:i + 32] for i in range(0, len(chunks_ADS), 32)]
-
     path = Path("images") #TODO: let user choose which folder of files to use as hiding medium or default
-    
-    list_of_used_files = [file.name for file in path.iterdir() if file.is_file() and file.suffix in image_extensions]
-    list_of_used_files = list_of_used_files[:number_of_files]
-
-    split_point = (number_of_files + 1) // 2 
     
     splitted_data = split_byte_data(ciphertext, number_of_files)
 
 
-    with open('order.txt', "w") as file:
-        for i, files in enumerate(list_of_used_files):
-            if i < len(list_of_used_files) - 1:
-                file.write(files + ',')
-            else:
-                file.write(files)
-        file.close()
-
-    # wipe_file(file_path)
-    print(f"Data from {file_path} has been hidden and the original file securely wiped.")
-
-
     if steg_technique.lower() == "lsb":
         # List comprehension to retrieve file names
-        files = list_of_used_files
-        if len(files) != len(splitted_data):
+        list_of_used_files = [file.name for file in path.iterdir() if file.is_file() and file.suffix in ['jpg']]
+        list_of_used_files = list_of_used_files[:len(splitted_data)]
+        if len(list_of_used_files) != len(splitted_data):
             print(f"Not enough images to be used. Number of images needed is {len(splitted_data)}.")
             sys.exit(1)
-        for data in splitted_data:
-            random_index = random.randint(0, len(files) - 1)
-            file = files.pop(random_index)
-            list_of_used_files.append(file)
+        for i in range(len(splitted_data)):
+            data = splitted_data[i]
+            file_path = str(path.absolute())+'\\'+ list_of_used_files[i]
             # Hide the encrypted data in the image
             # hide_data_in_png(file, )
         
     elif steg_technique.lower() == "dct":
         #TODO: Eddie
         # List comprehension to retrieve file names
-        files = list_of_used_files
-        if len(files) != len(splitted_data):
+        list_of_used_files = [file.name for file in path.iterdir() if file.is_file() and file.suffix in ['jpg']]
+        list_of_used_files = list_of_used_files[:len(splitted_data)]
+        if len(list_of_used_files) != len(splitted_data):
             print(f"Not enough images to be used. Number of images needed is {len(splitted_data)}.")
             sys.exit(1)
-        for data in splitted_data:
-            random_index = random.randint(0, len(files) - 1)
-            file = files.pop(random_index)
-            list_of_used_files.append(file)
+        for i in range(len(splitted_data)):
+            data = splitted_data[i]
+            file_path = str(path.absolute())+'\\'+ list_of_used_files[i]
             # Hide the encrypted data in the image
+            # hide_data_in_png(file, )
     
     elif steg_technique.lower() == "ads":
         #TODO: Eric
-        # List comprehension to retrieve file names 
-        files = list_of_used_files
-        if len(files) != len(splitted_data):
-            print(f"Not enough files to be used. Number of files needed is {len(splitted_data)}.")
+        # List comprehension to retrieve file names
+        list_of_used_files = [file.name for file in path.iterdir() if file.is_file()]
+        list_of_used_files = list_of_used_files[:len(splitted_data)]
+        if len(list_of_used_files) != len(splitted_data):
+            print(f"Not enough images to be used. Number of images needed is {len(splitted_data)}.")
             sys.exit(1)
-        for data in splitted_data:
-            random_index = random.randint(0, len(files) - 1)
-            file = files.pop(random_index)
-            list_of_used_files.append(file)
+        for i in range(len(splitted_data)):
+            data = splitted_data[i]
+            file_path = str(path.absolute())+'\\'+ list_of_used_files[i]
             # Hide the encrypted data in the image
+            # ads.write_data(data,file_path,"s")
 
     elif steg_technique.lower() =="default":
+        # Split the ciphertext into chunks of 32 bytes each
+        split_point = (number_of_files + 1) // 2 
+        half = len(ciphertext) // 2
+        chunks_DCT = ciphertext[:half]
+        chunks_ADS = ciphertext[half:]
+        splitted_data_DCT = [chunks_DCT[i:i + 32] for i in range(0, len(chunks_DCT), 32)]
+        splitted_data_ADS = [chunks_ADS[i:i + 32] for i in range(0, len(chunks_ADS), 32)]
         files_LSB = list_of_used_files[:split_point]
         if len(files_LSB) < len(splitted_data_DCT):
             print(f"Not enough images for LSB steganography. Needed: {len(splitted_data_DCT)}")
@@ -251,45 +232,22 @@ def hide_mode(steg_technique, data, number_of_files):
             # Hide the encrypted data chunk in the file using ADS
         pass
 
-    else:
-        pass
 
-    hide_list(list_of_used_files)
-    print("Data hidden successfully!")
+    with open('order.txt', "w") as file:
+        for i, files in enumerate(list_of_used_files):
+            if i < len(list_of_used_files) - 1:
+                file.write(files + ',')
+            else:
+                file.write(files)
+        file.close()
 
 
-def unhide_mode(image_path):
-    # Retrieve the nonce, tag, and ciphertext length from the registry
-    with winreg.OpenKey(
-        winreg.HKEY_CURRENT_USER, REG_PATH, 0, winreg.KEY_READ
-    ) as reg_key:
-        nonce, _ = winreg.QueryValueEx(reg_key, "Nonce")
-        tag, _ = winreg.QueryValueEx(reg_key, "Tag")
-        ciphertext_length, _ = winreg.QueryValueEx(reg_key, "CiphertextLength")
+    # wipe_file(path_of_data)
+    # print(f"Data from {file_path} has been hidden and the original file securely wiped.")
 
-    # Convert the retrieved values back into their original formats
-    nonce = bytes.fromhex(nonce)
-    tag = bytes.fromhex(tag)
-    expected_ciphertext_length = int(ciphertext_length)
 
-    # Extract the hidden data from the image
-    extracted_data = extract_data_from_png(image_path, expected_ciphertext_length)
-
-    print(
-        f"Trying to decrypt: {extracted_data.hex()} with tag: {tag.hex()} and nonce: {nonce.hex()}"
-    )
-
-    # Retrieve the AES key from the registry
-    key_parts_1, key_parts_2 = retrieve_key_from_registry()
-    key = reconstruct_key(key_parts_1, key_parts_2)
-
-    cipher = AES.new(key, AES.MODE_EAX, nonce=nonce)
-
-    try:
-        decrypted_data = cipher.decrypt_and_verify(extracted_data, tag)
-        print(f"Decrypted data: {decrypted_data.decode('utf-8')}")
-    except ValueError as e:
-        print(f"Decryption failed: {e}")
+def unhide_mode():
+    pass
 
 def wipe_file(file_path):
     with open(file_path, 'r+b') as file:
@@ -316,22 +274,6 @@ def main():
         unhide_mode(sys.argv[2])
     else:
         print("Invalid mode. Use 'hide' or 'unhide'.")
-
-
-def hide_list(value):
-    new_values_str = f"LIST_OF_FILES = {value}\n"
-    # Read the current content of the file
-    with open(FILENAME, "r") as file:
-        lines = file.readlines()
-
-    # Write back the lines, replacing the old LIST_OF_FILES definition
-    with open(FILENAME, "w") as file:
-        for line in lines:
-            # Check if the line starts with LIST_OF_FILES
-            if line.startswith("LIST_OF_FILES ="):
-                file.write(new_values_str)  # Replace with the new value
-            else:
-                file.write(line)  # Keep the original line
 
 
 
