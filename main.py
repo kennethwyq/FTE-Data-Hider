@@ -186,7 +186,7 @@ def hide_mode(steg_technique, data, number_of_files):
                 file.write(files)
         file.close()
 
-    wipe_file(file_path)
+    # wipe_file(file_path)
     print(f"Data from {file_path} has been hidden and the original file securely wiped.")
 
 
