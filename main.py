@@ -9,6 +9,10 @@ from Cryptodome.Protocol.SecretSharing import Shamir
 import LSB.LSB as lsb
 import ADS.ads as ads
 import DCT.dctMain as dct
+import DCT.dctZigZag as zigzag
+import DCT.dct as dct
+import DCT.dctEmbed_Extract as dctEncode
+import DCT.dctDecode as dctDecode
 import EOI.jpegeoi as eoi
 
 
@@ -173,7 +177,8 @@ def hide_mode(steg_technique, path_of_data, number_of_files):
             data = splitted_data[i]
             file_path = str(path.absolute())+'\\'+ list_of_used_files[i]
             # Hide the encrypted data in the image
-            # hide_data_in_png(file, )
+            # hide_data_in_jpg(file, )
+
         
     elif steg_technique.lower() == "dct":
         #TODO: Eddie
@@ -188,6 +193,8 @@ def hide_mode(steg_technique, path_of_data, number_of_files):
             file_path = str(path.absolute())+'\\'+ list_of_used_files[i]
             # Hide the encrypted data in the image
             # hide_data_in_png(file, )
+            dct.embed_secret_message_into_image(file_path, data)
+
     
     elif steg_technique.lower() == "ads":
         #TODO: Eric

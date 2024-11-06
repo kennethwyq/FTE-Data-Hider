@@ -1,80 +1,166 @@
-#Libraries
+# #Libraries
+# import cv2
+# import bitstring
+# import numpy as np
+#
+# #Files
+# import dctZigZag as zigzag
+# import dct as dct
+# import dctEmbed_Extract as encode
+#
+# NUM_CHANNELS = 3
+# COVER_IMAGE_FILEPATH  = "./images/gnar.jpg"
+# STEGO_IMAGE_FILEPATH  = "../images/stego_gnar.jpg"
+# SECRET_MESSAGE_STRING = "secret"
+#
+# raw_cover_image = cv2.imread(COVER_IMAGE_FILEPATH, flags=cv2.IMREAD_COLOR)
+# height, width   = raw_cover_image.shape[:2]
+#
+# # Force Image Dimensions to be 8x8 compliant
+# while(height % 8): height += 1 # Rows
+# while(width  % 8): width  += 1 # Cols
+# valid_dim = (width, height)
+# padded_image    = cv2.resize(raw_cover_image, valid_dim)
+# cover_image_f32 = np.float32(padded_image)
+# cover_image_YCC = dct.YCC_Image(cv2.cvtColor(cover_image_f32, cv2.COLOR_BGR2YCrCb))
+#
+# # Placeholder for holding stego image data
+# stego_image = np.empty_like(cover_image_f32)
+#
+# #Function to log secret message bits
+# def log_secret_message_bits(secret_message):
+#     secret_data = ""
+#     for char in secret_message.encode('ascii'):
+#         secret_data += bitstring.pack('uint:8', char)
+#     print(f"Original secret message bits: {secret_data.bin}")  # Log the bitstream
+#     return secret_data
+#
+# secret_data = log_secret_message_bits(SECRET_MESSAGE_STRING)
+# print(f"Original secret message bits: {secret_data}")  # Log the bitstream before embedding
+#
+# for chan_index in range(NUM_CHANNELS):
+#     # FORWARD DCT STAGE
+#     dct_blocks = [cv2.dct(block) for block in cover_image_YCC.channels[chan_index]]
+#
+#     # QUANTIZATION STAGE
+#     dct_quants = [np.around(np.divide(item, dct.JPEG_STD_LUM_QUANT_TABLE)) for item in dct_blocks]
+#
+#     # Sort DCT coefficients by frequency
+#     sorted_coefficients = [zigzag.zigzag(block) for block in dct_quants]
+#
+#     # Embed data in Luminance layer
+#     if (chan_index == 0):
+#         # DATA INSERTION STAGE
+#         secret_data = ""
+#         for char in SECRET_MESSAGE_STRING.encode('ascii'):
+#             secret_data += bitstring.pack('uint:8', char)
+#         embedded_dct_blocks   = encode.embed_encoded_data_dct(secret_data, sorted_coefficients)
+#         desorted_coefficients = [zigzag.inverse_zigzag(block, vmax=8,hmax=8) for block in embedded_dct_blocks]
+#     else:
+#         # Reorder coefficients to how they originally were
+#         desorted_coefficients = [zigzag.inverse_zigzag(block, vmax=8,hmax=8) for block in sorted_coefficients]
+#
+#     # DE-QUANTIZATION STAGE
+#     dct_quantization = [np.multiply(data, dct.JPEG_STD_LUM_QUANT_TABLE) for data in desorted_coefficients]
+#
+#     # Inverse DCT Stage
+#     inverse_dct_blocks = [cv2.idct(block) for block in dct_quantization]
+#
+#     # Rebuild full image channel
+#     stego_image[:,:,chan_index] = np.asarray(
+#         dct.stitch_8x8_blocks_back_together(cover_image_YCC.width, inverse_dct_blocks))
+#
+# # Convert back to RGB (BGR) Colorspace
+# stego_image_BGR = cv2.cvtColor(stego_image, cv2.COLOR_YCR_CB2BGR)
+#
+# # Clamp Pixel Values to [0 - 255]
+# final_stego_image = np.uint8(np.clip(stego_image_BGR, 0, 255))
+#
+# # Write stego image
+# cv2.imwrite(STEGO_IMAGE_FILEPATH, final_stego_image)
+
+
 import cv2
 import bitstring
 import numpy as np
-
-#Files
-import dctZigZag as zigzag
-import dct as dct
-import dctEmbed_Extract as encode
+import DCT.dctZigZag as zigzag
+import DCT.dct as dct
+import DCT.dctEmbed_Extract as encode
 
 NUM_CHANNELS = 3
-COVER_IMAGE_FILEPATH  = "./images/gnar.jpg"
-STEGO_IMAGE_FILEPATH  = "../images/stego_gnar.jpg"
-SECRET_MESSAGE_STRING = "secret"
 
-raw_cover_image = cv2.imread(COVER_IMAGE_FILEPATH, flags=cv2.IMREAD_COLOR)
-height, width   = raw_cover_image.shape[:2]
+def embed_secret_message_into_image(COVER_IMAGE_FILEPATH, SECRET_MESSAGE_STRING, STEGO_IMAGE_FILEPATH):
+    # Load the cover image
+    raw_cover_image = cv2.imread(COVER_IMAGE_FILEPATH, flags=cv2.IMREAD_COLOR)
+    height, width   = raw_cover_image.shape[:2]
 
-# Force Image Dimensions to be 8x8 compliant
-while(height % 8): height += 1 # Rows
-while(width  % 8): width  += 1 # Cols
-valid_dim = (width, height)
-padded_image    = cv2.resize(raw_cover_image, valid_dim)
-cover_image_f32 = np.float32(padded_image)
-cover_image_YCC = dct.YCC_Image(cv2.cvtColor(cover_image_f32, cv2.COLOR_BGR2YCrCb))
+    # Force Image Dimensions to be 8x8 compliant
+    while(height % 8): height += 1  # Rows
+    while(width  % 8): width  += 1  # Columns
+    valid_dim = (width, height)
+    padded_image    = cv2.resize(raw_cover_image, valid_dim)
+    cover_image_f32 = np.float32(padded_image)
+    cover_image_YCC = dct.YCC_Image(cv2.cvtColor(cover_image_f32, cv2.COLOR_BGR2YCrCb))
 
-# Placeholder for holding stego image data
-stego_image = np.empty_like(cover_image_f32)
+    # Placeholder for holding stego image data
+    stego_image = np.empty_like(cover_image_f32)
 
-#Function to log secret message bits
-def log_secret_message_bits(secret_message):
-    secret_data = ""
-    for char in secret_message.encode('ascii'):
-        secret_data += bitstring.pack('uint:8', char)
-    print(f"Original secret message bits: {secret_data.bin}")  # Log the bitstream
-    return secret_data
-
-secret_data = log_secret_message_bits(SECRET_MESSAGE_STRING)
-print(f"Original secret message bits: {secret_data}")  # Log the bitstream before embedding
-
-for chan_index in range(NUM_CHANNELS):
-    # FORWARD DCT STAGE
-    dct_blocks = [cv2.dct(block) for block in cover_image_YCC.channels[chan_index]]
-
-    # QUANTIZATION STAGE
-    dct_quants = [np.around(np.divide(item, dct.JPEG_STD_LUM_QUANT_TABLE)) for item in dct_blocks]
-
-    # Sort DCT coefficients by frequency
-    sorted_coefficients = [zigzag.zigzag(block) for block in dct_quants]
-
-    # Embed data in Luminance layer
-    if (chan_index == 0):
-        # DATA INSERTION STAGE
+    # Function to log secret message bits
+    def log_secret_message_bits(secret_message):
         secret_data = ""
-        for char in SECRET_MESSAGE_STRING.encode('ascii'):
+        for char in secret_message.encode('ascii'):
             secret_data += bitstring.pack('uint:8', char)
-        embedded_dct_blocks   = encode.embed_encoded_data_dct(secret_data, sorted_coefficients)
-        desorted_coefficients = [zigzag.inverse_zigzag(block, vmax=8,hmax=8) for block in embedded_dct_blocks]
-    else:
-        # Reorder coefficients to how they originally were
-        desorted_coefficients = [zigzag.inverse_zigzag(block, vmax=8,hmax=8) for block in sorted_coefficients]
+        print(f"Original secret message bits: {secret_data.bin}")  # Log the bitstream
+        return secret_data
 
-    # DE-QUANTIZATION STAGE
-    dct_quantization = [np.multiply(data, dct.JPEG_STD_LUM_QUANT_TABLE) for data in desorted_coefficients]
+    # Log the secret message
+    secret_data = log_secret_message_bits(SECRET_MESSAGE_STRING)
+    print(f"Original secret message bits: {secret_data}")  # Log the bitstream before embedding
 
-    # Inverse DCT Stage
-    inverse_dct_blocks = [cv2.idct(block) for block in dct_quantization]
+    for chan_index in range(NUM_CHANNELS):
+        # FORWARD DCT STAGE
+        dct_blocks = [cv2.dct(block) for block in cover_image_YCC.channels[chan_index]]
 
-    # Rebuild full image channel
-    stego_image[:,:,chan_index] = np.asarray(
-        dct.stitch_8x8_blocks_back_together(cover_image_YCC.width, inverse_dct_blocks))
+        # QUANTIZATION STAGE
+        dct_quants = [np.around(np.divide(item, dct.JPEG_STD_LUM_QUANT_TABLE)) for item in dct_blocks]
 
-# Convert back to RGB (BGR) Colorspace
-stego_image_BGR = cv2.cvtColor(stego_image, cv2.COLOR_YCR_CB2BGR)
+        # Sort DCT coefficients by frequency
+        sorted_coefficients = [zigzag.zigzag(block) for block in dct_quants]
 
-# Clamp Pixel Values to [0 - 255]
-final_stego_image = np.uint8(np.clip(stego_image_BGR, 0, 255))
+        # Embed data in Luminance layer
+        if chan_index == 0:
+            # DATA INSERTION STAGE
+            secret_data = ""
+            for char in SECRET_MESSAGE_STRING.encode('ascii'):
+                secret_data += bitstring.pack('uint:8', char)
+            embedded_dct_blocks = encode.embed_encoded_data_dct(secret_data, sorted_coefficients)
+            desorted_coefficients = [zigzag.inverse_zigzag(block, vmax=8, hmax=8) for block in embedded_dct_blocks]
+        else:
+            # Reorder coefficients to how they originally were
+            desorted_coefficients = [zigzag.inverse_zigzag(block, vmax=8, hmax=8) for block in sorted_coefficients]
 
-# Write stego image
-cv2.imwrite(STEGO_IMAGE_FILEPATH, final_stego_image)
+        # DE-QUANTIZATION STAGE
+        dct_quantization = [np.multiply(data, dct.JPEG_STD_LUM_QUANT_TABLE) for data in desorted_coefficients]
+
+        # Inverse DCT Stage
+        inverse_dct_blocks = [cv2.idct(block) for block in dct_quantization]
+
+        # Rebuild full image channel
+        stego_image[:, :, chan_index] = np.asarray(
+            dct.stitch_8x8_blocks_back_together(cover_image_YCC.width, inverse_dct_blocks))
+
+    # Convert back to RGB (BGR) Colorspace
+    stego_image_BGR = cv2.cvtColor(stego_image, cv2.COLOR_YCR_CB2BGR)
+
+    # Clamp Pixel Values to [0 - 255]
+    final_stego_image = np.uint8(np.clip(stego_image_BGR, 0, 255))
+
+    # Write stego image to the output file
+    cv2.imwrite(STEGO_IMAGE_FILEPATH, final_stego_image)
+
+# # Example usage
+# COVER_IMAGE_PATH = "./images/gnar.jpg"
+# SECRET_MESSAGE = "secret"
+# STOGO_IMAGE_PATH = "../images/stego_gnar.jpg"
+#
+# embed_secret_message_into_image(COVER_IMAGE_PATH, SECRET_MESSAGE, STOGO_IMAGE_PATH)
