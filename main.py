@@ -175,7 +175,6 @@ def hide_mode(steg_technique, path_of_data, number_of_files):
     if steg_technique.lower() == "lsb":
         # Only use PNG files for LSB embedding
         png_files = [file for file in list_of_used_files if file.suffix.lower() == '.png']
-        print("Data length (in bytes):", len(secret_data))
         # Ensure we have enough PNG files for the data chunks
         if len(png_files) < len(splitted_data):
             print(f"Not enough PNG images to hide data. Required: {len(splitted_data)}, found: {len(png_files)}.")
