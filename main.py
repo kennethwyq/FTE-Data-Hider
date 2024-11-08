@@ -13,7 +13,7 @@ import DCT.dctZigZag as zigzag
 import DCT.dct as dct
 import DCT.dctEmbed_Extract as dctEncode
 import DCT.dctDecode as dctDecode
-import EOI.jpegeoi as eoi
+import EOI.jpegeol as eol
 
 
 REG_PATH = r"SOFTWARE\f3832454-4e14-a1b9-0f614e507aa5"
@@ -168,7 +168,7 @@ def hide_mode(steg_technique, path_of_data, number_of_files):
 
     if steg_technique.lower() == "lsb":
         # List comprehension to retrieve file names
-        list_of_used_files = [file.name for file in path.iterdir() if file.is_file() and file.suffix in ['jpg']]
+        list_of_used_files = [file.name for file in path.iterdir() if file.is_file() and file.suffix == '.jpg']
         list_of_used_files = list_of_used_files[:len(splitted_data)]
         if len(list_of_used_files) != len(splitted_data):
             print(f"Not enough images to be used. Number of images needed is {len(splitted_data)}.")
@@ -183,7 +183,7 @@ def hide_mode(steg_technique, path_of_data, number_of_files):
     elif steg_technique.lower() == "dct":
         #TODO: Eddie
         # List comprehension to retrieve file names
-        list_of_used_files = [file.name for file in path.iterdir() if file.is_file() and file.suffix in ['jpg']]
+        list_of_used_files = [file.name for file in path.iterdir() if file.is_file() and file.suffix == '.jpg']
         list_of_used_files = list_of_used_files[:len(splitted_data)]
         if len(list_of_used_files) != len(splitted_data):
             print(f"Not enough images to be used. Number of images needed is {len(splitted_data)}.")
@@ -207,8 +207,30 @@ def hide_mode(steg_technique, path_of_data, number_of_files):
         for i in range(len(splitted_data)):
             data = splitted_data[i]
             file_path = str(path.absolute())+'\\'+ list_of_used_files[i]
+            stream_name = '1'
             # Hide the encrypted data in the image
-            # ads.write_data(data,file_path,"s")
+            ads.write_ads(data, file_path, stream_name)
+
+
+    elif steg_technique.lower() == "eol":
+        # TODO: Eric
+        # List comprehension to retrieve file names
+        list_of_used_files = [file.name for file in path.iterdir() if file.is_file() and file.suffix == '.jpeg']
+        list_of_used_files = list_of_used_files[:len(splitted_data)]
+        print(len(list_of_used_files))
+        print(len(splitted_data))
+        if len(list_of_used_files) != len(splitted_data):
+            print(f"Not enough images to be used. Number of images needed is {len(splitted_data)}.")
+            sys.exit(1)
+        for i in range(len(splitted_data)):
+            data = splitted_data[i]
+            file_path = str(path.absolute()) + '\\' + list_of_used_files[i]
+            # Hide the encrypted data in the image
+            jpeg_bytes = eol.read_jpeg(file_path)
+            eol_position = eol.eol_jpeg(jpeg_bytes)
+            new_jpeg_bytes = eol.insert(jpeg_bytes, eol_position, data)
+            eol.overwrite(new_jpeg_bytes, file_path)
+
 
     elif steg_technique.lower() =="default":
         # Split the ciphertext into chunks of 32 bytes each
