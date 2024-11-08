@@ -1,3 +1,4 @@
+#Libraries
 import sys
 import winreg
 import random
@@ -6,14 +7,16 @@ from binascii import hexlify, unhexlify
 from Cryptodome.Cipher import AES
 from Cryptodome.Random import get_random_bytes
 from Cryptodome.Protocol.SecretSharing import Shamir
+
+#Scripts
 import LSB.LSB as lsb
 import ADS.ads as ads
-import DCT.dctMain as dct
-import DCT.dctZigZag as zigzag
-import DCT.dct as dct
-import DCT.dctEmbed_Extract as dctEncode
-import DCT.dctDecode as dctDecode
 import EOI.jpegeol as eol
+import DCT.a_read as dctRead
+import DCT.b_dct as dct
+import DCT.c_embed_extract as dctEmbed_Extract
+import DCT.d_zigzag as dctZigzag
+import DCT.e_decode as dctDecode
 
 
 REG_PATH = r"SOFTWARE\f3832454-4e14-a1b9-0f614e507aa5"
@@ -192,19 +195,19 @@ def hide_mode(steg_technique, path_of_data, number_of_files):
     elif steg_technique.lower() == "dct":
         #TODO: Eddie
         # List comprehension to retrieve file names
-        list_of_used_files = [file.name for file in path.iterdir() if file.is_file() and file.suffix == '.jpg']
+        list_of_used_files = [file.name for file in path.iterdir() if file.is_file() and file.suffix in ['.jpg']]
         list_of_used_files = list_of_used_files[:len(splitted_data)]
         if len(list_of_used_files) != len(splitted_data):
             print(f"Not enough images to be used. Number of images needed is {len(splitted_data)}.")
             sys.exit(1)
         for i in range(len(splitted_data)):
             data = splitted_data[i]
-            file_path = str(path.absolute())+'\\'+ list_of_used_files[i]
+            file_path = str(path.absolute()) + '\\' + list_of_used_files[i]
             # Hide the encrypted data in the image
             # hide_data_in_png(file, )
-            dct.embed_secret_message_into_image(file_path, data)
+            dctRead.embed_secret_message_into_image(file_path, data, list_of_used_files[i])
 
-    
+
     elif steg_technique.lower() == "ads":
         #TODO: Eric
         # List comprehension to retrieve file names
@@ -270,6 +273,8 @@ def hide_mode(steg_technique, path_of_data, number_of_files):
             # Hide the encrypted data chunk in the file using ADS
         pass
 
+    # Call `process_text_file` with the data and `number_of_files`
+    dctRead.process_text_file(ciphertext, number_of_files)
 
     with open('order.txt', "w") as file:
         for i, file_path in enumerate(list_of_used_files):
