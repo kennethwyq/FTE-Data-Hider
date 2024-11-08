@@ -13,18 +13,7 @@ import DCT.dctZigZag as zigzag
 import DCT.dct as dct
 import DCT.dctEmbed_Extract as dctEncode
 import DCT.dctDecode as dctDecode
-import EOI.jpegeoi as eoi
-
-
-
-
-# Large byte sequence to hide
-secret_data = b'p..?\xa8\x8f\xf3M\x0e3\x18\xb8;Ml\xef\x10\x160h\xd4\xfb\x1aO\x96\xa0VO^\xb0^\xe8\x8a\xc2\xca\x9b\xe8\xba\xbc\x17?P\xea\xed\x0eK:\xa1\x8a\xc7\x01\xc9\xd9F\x16\xef}\xf1\xc9)\xfc\xfd\xc5d\x97<\tA\xe7I\xe6\xf4\x97\x8b\x95\x9f\x8c\\`d\xe0NC\x0b\xe9\xc6}\xf8\xf8\xd3}\xf1Y\xb2\x14\xc4{G9\xb6\xa0x|\x92\x0f\xb3\xfb\xa4\xc3\x11\x94\xcb_\xbdSP\xd8tF\xae\xf3i6h\x02\x0f\xa4\xce\xd2\xda\x8d\x0c!b:\x8eQ\xd7+L\xee\xfd\xb6=X\xb8w\xb2Z\x03n\xab3%\xa4\x8c\x03%e\xc3\xb7XRo)\x9d\xb9\xf4\xfdx\xd2\x90N<x\xbc\xcaMh[\xf4\x8b\xbc{G\x14\x83\xe81\x8a0\\\\\x9d\x97V\xfcI\xe1\x82\xf7\xf3\xdcc\x9a\x88\x8b\xe6L\x1d\xbf\xd6w\x0c~<k\x0c\xe9\xbe\xfcb{$\x87\xbfo\x86n\xd4\xbbY\x8c\xaa\xc4|Gh\xe96/\xe3k\xab\xd77w\xc6o\xa5\xc5^\x1cL\xb0\xfe\xf5\xa7Sg\'E\xb3\x87C3\xdf\xfe\xf2X.\x1f\xe5i\xbc\x94\xb0\x82\x99\xef\xc7\xb3\xf07\xef\xe4R\x10\xed\xda }E\xb4*|\xd5\xc0\xeb)\xc2\xd3\xcf;\x8e\xf1\x96,\x04Y\x14\xa49L\xb2J\x1f\x1e34\xfb\xff\xe8\xfd\xd3{\x94}+13\\\xc1\x07Nb\x13n\x7f\xab\x04\x7f\x00\xbe\x94F\xa3\x11\xb3\xe1r\x10\x1f\x89\xd9\xf5:\x96\xba\xe4\xd7\n=\xf8`\xc5\x8b\xf4jei\xc8\x04N\x13\xd3\x19\x7f\x01\x9f\x98\x12`9\xe5\x18b\x0e\xb6et)\xbd\x1fjG\x00\x8c\x06K\xae\xf1\xc0\xc5\x9157\xb9\x95e\xa8y\xf4r\xfb\xab\x9d\xc1V\xafG\xbd2C\xfe\xcaQ\x10\'?\xbaA\x08\x86\x80\xdb6\xbc\x05\x02\xb9\xe9]q\x17o\x9c\xccP\xc7\x89\xac\xfdy\x04&5\xa5\x8f\x08\x11_\xae\xd6\x7fQ\xf9\xae\xaf\xfa^\xc3<\xce\xbc$\xd9\xa9D\xfa\x16\x91q\x19\xf2\xb3=\x88`\x1d\xcen\xb1|"|o\xe5O\xd4\xad\x02\xa7\xf6\t\xd0#+\x1f>n'
-#secret_data = b'\xa8\x8f\xf3M\x0e3\x18\xb8;'
-# Get data length in bytes
-data_length = len(secret_data)
-print("Data length (in bytes):", data_length)
-
+import EOI.jpegeol as eol
 
 
 REG_PATH = r"SOFTWARE\f3832454-4e14-a1b9-0f614e507aa5"
@@ -204,7 +193,7 @@ def hide_mode(steg_technique, path_of_data, number_of_files):
     elif steg_technique.lower() == "dct":
         #TODO: Eddie
         # List comprehension to retrieve file names
-        list_of_used_files = [file.name for file in path.iterdir() if file.is_file() and file.suffix in ['jpg']]
+        list_of_used_files = [file.name for file in path.iterdir() if file.is_file() and file.suffix == '.jpg']
         list_of_used_files = list_of_used_files[:len(splitted_data)]
         if len(list_of_used_files) != len(splitted_data):
             print(f"Not enough images to be used. Number of images needed is {len(splitted_data)}.")
@@ -228,8 +217,30 @@ def hide_mode(steg_technique, path_of_data, number_of_files):
         for i in range(len(splitted_data)):
             data = splitted_data[i]
             file_path = str(path.absolute())+'\\'+ list_of_used_files[i]
+            stream_name = '1'
             # Hide the encrypted data in the image
-            # ads.write_data(data,file_path,"s")
+            ads.write_ads(data, file_path, stream_name)
+
+
+    elif steg_technique.lower() == "eol":
+        # TODO: Eric
+        # List comprehension to retrieve file names
+        list_of_used_files = [file.name for file in path.iterdir() if file.is_file() and file.suffix == '.jpeg']
+        list_of_used_files = list_of_used_files[:len(splitted_data)]
+        print(len(list_of_used_files))
+        print(len(splitted_data))
+        if len(list_of_used_files) != len(splitted_data):
+            print(f"Not enough images to be used. Number of images needed is {len(splitted_data)}.")
+            sys.exit(1)
+        for i in range(len(splitted_data)):
+            data = splitted_data[i]
+            file_path = str(path.absolute()) + '\\' + list_of_used_files[i]
+            # Hide the encrypted data in the image
+            jpeg_bytes = eol.read_jpeg(file_path)
+            eol_position = eol.eol_jpeg(jpeg_bytes)
+            new_jpeg_bytes = eol.insert(jpeg_bytes, eol_position, data)
+            eol.overwrite(new_jpeg_bytes, file_path)
+
 
     elif steg_technique.lower() =="default":
         # Split the ciphertext into chunks of 32 bytes each
