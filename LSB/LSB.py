@@ -22,32 +22,38 @@ def bin_to_int(binary_value):
     """Convert an 8-bit binary string to an integer."""
     return int(binary_value, 2)
 
-# LSB encoding for PNG with proper RGBA handling
+# LSB encoding for PNG with RGB channel support
 def hide_data_in_png(image_path, secret_data):
-    """Hide data in PNG image using LSB encoding and save it back to the original image."""
+    """Hide data in all RGB channels of PNG image using LSB encoding and save it back to the original image."""
     img = Image.open(image_path)
     pixels = list(img.getdata())
-
-    # Check if image is RGBA or RGB
-    is_rgba = len(pixels[0]) == 4
 
     binary_secret_data = ''.join([int_to_bin(byte) for byte in secret_data])
     total_bits = len(binary_secret_data)
 
-    if total_bits > len(pixels):
+    if total_bits > len(pixels) * 3:
         raise ValueError(f"Not enough space in image to hide {total_bits} bits of data.")
 
     pixel_index = 0
+    color_index = 0
     print(f"Total bits to hide: {total_bits}")
+
     for bit in binary_secret_data:
-        r, g, b, *a = pixels[pixel_index] if is_rgba else (*pixels[pixel_index],)  # Handle RGBA and RGB
+        r, g, b = pixels[pixel_index]
 
-        # Modify the LSB of the red channel to hide the bit
-        original_r = r
-        r = (r & ~1) | int(bit)
-        pixels[pixel_index] = (r, g, b, *a) if is_rgba else (r, g, b)
+        # Change the respective color channel based on color_index (cycle through R, G, B)
+        if color_index == 0:  # Red channel
+            r = (r & ~1) | int(bit)
+        elif color_index == 1:  # Green channel
+            g = (g & ~1) | int(bit)
+        elif color_index == 2:  # Blue channel
+            b = (b & ~1) | int(bit)
 
-        pixel_index += 1
+        # Set the new pixel and update indices
+        pixels[pixel_index] = (r, g, b)
+        color_index = (color_index + 1) % 3
+        if color_index == 0:
+            pixel_index += 1
 
     # Save the modified image back to the original file
     img.putdata(pixels)
@@ -57,22 +63,29 @@ def hide_data_in_png(image_path, secret_data):
     return True
 
 def extract_data_from_png(image_path, data_length):
-    """Extract hidden data from PNG image."""
+    """Extract hidden data from PNG image across RGB channels."""
     img = Image.open(image_path)
     pixels = list(img.getdata())
 
-    # Check if image is RGBA or RGB
-    is_rgba = len(pixels[0]) == 4
-
     binary_data = []
     pixel_index = 0
+    color_index = 0
     print(f"Extracting {data_length * 8} bits of data.")
 
     for _ in range(data_length * 8):
-        r, g, b, *a = pixels[pixel_index] if is_rgba else (*pixels[pixel_index],)
-        extracted_bit = str(r & 1)
-        binary_data.append(extracted_bit)
-        pixel_index += 1
+        r, g, b = pixels[pixel_index]
+
+        # Extract the LSB of the respective channel based on color_index
+        if color_index == 0:  # Red channel
+            binary_data.append(str(r & 1))
+        elif color_index == 1:  # Green channel
+            binary_data.append(str(g & 1))
+        elif color_index == 2:  # Blue channel
+            binary_data.append(str(b & 1))
+
+        color_index = (color_index + 1) % 3
+        if color_index == 0:
+            pixel_index += 1
 
     binary_string = ''.join(binary_data)
     extracted_data = bytes([bin_to_int(binary_string[i:i + 8]) for i in range(0, len(binary_string), 8)])
@@ -80,18 +93,18 @@ def extract_data_from_png(image_path, data_length):
     print(f"Extracted Data (Hex): {extracted_data.hex()}")
     return extracted_data
 
-# remove all comment to test the script directly the example secret data hide works fine and unhide works fine
-#try:
-#    print("\n--- Hiding Data ---")
-#    hide_data_in_png(image_path, secret_data)
-#    
-#    print("\n--- Extracting Data ---")
-#    extracted_data = extract_data_from_png(image_path, len(secret_data))
-#    
+# Test the hiding and extraction functions
+try:
+    print("\n--- Hiding Data ---")
+    hide_data_in_png(image_path, secret_data)
+    
+    print("\n--- Extracting Data ---")
+    extracted_data = extract_data_from_png(image_path, len(secret_data))
+    
     # Check if the extracted data matches the original secret data
-#    if extracted_data == secret_data:
-#        print("\nSuccess: Extracted data matches the original secret data!")
-#    else:
-#        print("\nFailure: Extracted data does not match the original secret data.")
-#except Exception as e:
-#    print("An error occurred:", e)
+    if extracted_data == secret_data:
+        print("\nSuccess: Extracted data matches the original secret data!")
+    else:
+        print("\nFailure: Extracted data does not match the original secret data.")
+except Exception as e:
+    print("An error occurred:", e)
