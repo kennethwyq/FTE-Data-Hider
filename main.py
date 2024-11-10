@@ -172,12 +172,7 @@ def hide_mode(steg_technique, path_of_data, number_of_files):
         order_file.write(encrypted_order)
     print("Encrypted order saved to order.txt")
 
-    ciphertext = cipher.encrypt(file_data)  # Continue using the same cipher instance
-    tag = cipher.digest()
-
-    with open('tag.txt', 'wb') as tag_file:
-        tag_file.write(tag)
-    print("Encryption tag saved to tag.txt")
+    ciphertext, tag = cipher.encrypt_and_digest(file_data)  # Continue using the same cipher instance
 
     splitted_data = split_byte_data(ciphertext, number_of_files)
     # Ensure `list_of_used_files` is limited to the number of data chunks
@@ -296,7 +291,6 @@ def unhide_mode(technique):
         with open('order.txt', 'rb') as order_file:
             encrypted_order = order_file.read()
             decrypted_order = cipher.decrypt(encrypted_order)
-            print("WTFFFF")
             decrypted_order = decrypted_order.decode()
             print("Decrypted order:", decrypted_order)
     except Exception as e:
