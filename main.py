@@ -311,7 +311,6 @@ def unhide_mode(technique):
     order_cipher = AES.new(key, AES.MODE_EAX, nonce=iv)
     order_string = order_cipher.decrypt_and_verify(encrypted_order, order_tag).decode()
     ordered_files = order_string.split(',')
-    print(ordered_files)
     if (technique.lower() == "ads"):
         for file in ordered_files:
             file_path = str(path.absolute()) + '\\' + file
@@ -322,10 +321,9 @@ def unhide_mode(technique):
         print("Technique Doesn't Exist")
         sys.exit(1)
         
-    print(original_data)
     # In unhide_mode
-    print("Decryption Key:", key.hex())
-    print("Nonce (IV):", iv.hex())
+    print("Retrieved Decryption Key:", key.hex())
+    print("Retrieved Nonce (IV):", iv.hex())
     print("Retrieved Tag:", tag.hex())
     print("Original Data (to be decrypted):", original_data.hex())
 
