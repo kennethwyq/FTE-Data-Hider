@@ -284,6 +284,11 @@ def hide_mode(steg_technique, path_of_data, number_of_files):
     with open('order.txt', 'wb') as file:
         file.write(encrypted_order + b"||" + order_tag)  
     
+    print("Encryption Key:", key.hex())
+    print("Nonce (IV):", iv.hex())
+    print("Tag:", tag.hex())
+    print("Ciphertext:", ciphertext.hex())
+
     # wipe_file(path_of_data)
     # print(f"Data from {file_path} has been hidden and the original file securely wiped.")
 
@@ -318,14 +323,17 @@ def unhide_mode(technique):
         sys.exit(1)
         
     print(original_data)
+    # In unhide_mode
+    print("Decryption Key:", key.hex())
+    print("Nonce (IV):", iv.hex())
+    print("Retrieved Tag:", tag.hex())
+    print("Original Data (to be decrypted):", original_data.hex())
 
-    try:
-        cipher = AES.new(key, AES.MODE_EAX, nonce=iv)
-        decrypted_data = cipher.decrypt_and_verify(original_data, tag)  # `tag` should be the same as in `hide_mode`
-        print("Decrypted original data:", decrypted_data)
-    except ValueError:
-        print("Decryption failed. Tag mismatch or corrupted data.")
-        sys.exit(1)
+
+
+    cipher = AES.new(key, AES.MODE_EAX, nonce=iv)
+    decrypted_data = cipher.decrypt_and_verify(original_data, tag)
+    print("Decrypted original data:", decrypted_data)
 
     pass
 
