@@ -160,18 +160,26 @@ def hide_mode(steg_technique, path_of_data, number_of_files):
     with open(path_of_data, 'rb') as file:
         file_data = file.read()
 
-    cipher = AES.new(key, AES.MODE_EAX)
-    ciphertext, tag = cipher.encrypt_and_digest(file_data)
-    nonce = cipher.nonce
+    path = Path("images") #TODO: let user choose which folder of files to use as hiding medium or default
+    list_of_used_files = [file for file in path.iterdir() if file.is_file()]    # Retrieve available files
+
+    cipher = AES.new(key, AES.MODE_EAX, iv)
+
+    order = ','.join([str(file_path) for file_path in list_of_used_files[:number_of_files]])
+    encrypted_order = cipher.encrypt(order.encode())
+
+    with open('order.txt', 'wb') as order_file:
+        order_file.write(encrypted_order)
+    print("Encrypted order saved to order.txt")
+
+    ciphertext = cipher.encrypt(file_data)  # Continue using the same cipher instance
+    tag = cipher.digest()
 
     with open('tag.txt', 'wb') as tag_file:
         tag_file.write(tag)
     print("Encryption tag saved to tag.txt")
 
-    path = Path("images") #TODO: let user choose which folder of files to use as hiding medium or default
     splitted_data = split_byte_data(ciphertext, number_of_files)
-    # Retrieve available files
-    list_of_used_files = [file for file in path.iterdir() if file.is_file()]
     # Ensure `list_of_used_files` is limited to the number of data chunks
     list_of_used_files = list_of_used_files[:len(splitted_data)]
 
@@ -277,62 +285,51 @@ def hide_mode(steg_technique, path_of_data, number_of_files):
     # Call `process_text_file` with the data and `number_of_files`
     dctRead.process_text_file(ciphertext, number_of_files)
 
-    order_string = ','.join([str(file_path) for file_path in list_of_used_files])
-    order_cipher = AES.new(key, AES.MODE_EAX, nonce=iv)  
-    encrypted_order, order_tag = order_cipher.encrypt_and_digest(order_string.encode())
-
-    with open('order.txt', 'wb') as file:
-        file.write(encrypted_order + b"||" + order_tag)  
-    
-    print("Encryption Key:", key.hex())
-    print("Nonce (IV):", iv.hex())
-    print("Tag:", tag.hex())
-    print("Ciphertext:", ciphertext.hex())
-
     # wipe_file(path_of_data)
     # print(f"Data from {file_path} has been hidden and the original file securely wiped.")
 
 
 def unhide_mode(technique):
     key, iv = reconstruct_key()
+    cipher = AES.new(key, AES.MODE_EAX, iv)
     try:
-        with open('tag.txt', 'rb') as tag_file:
-            tag = tag_file.read()
-        print("Encryption tag retrieved from tag.txt")
-    except FileNotFoundError:
-        print("tag.txt not found. Cannot proceed with decryption.")
+        with open('order.txt', 'rb') as order_file:
+            encrypted_order = order_file.read()
+            decrypted_order = cipher.decrypt(encrypted_order)
+            print("WTFFFF")
+            decrypted_order = decrypted_order.decode()
+            print("Decrypted order:", decrypted_order)
+    except Exception as e:
+        print("Error decrypting order.txt:", e)
         sys.exit(1)
 
-    with open('order.txt', 'rb') as file:
-        encrypted_order_data = file.read()
-    original_data = b""
-    path = Path("images") 
-    encrypted_order, order_tag = encrypted_order_data.split(b'||') 
-    order_cipher = AES.new(key, AES.MODE_EAX, nonce=iv)
-    order_string = order_cipher.decrypt_and_verify(encrypted_order, order_tag).decode()
-    ordered_files = order_string.split(',')
-    if (technique.lower() == "ads"):
+    print(decrypted_order)
+
+    encrypted_original_data = b""
+    if technique.lower() == "ads":
+        ordered_files = decrypted_order.split(',')
         for file in ordered_files:
-            file_path = str(path.absolute()) + '\\' + file
+            file_path = file
             data = ads.read_ads(file_path, "1")
-            original_data += data
-           #ads.delete_ads(file_path, "1")
+            encrypted_original_data += data
+            #ads.delete_ads(file_path, "1")
+    elif technique.lower() == "lsb":
+        pass
+    elif technique.lower() == "dct":
+        pass
+    elif technique.lower() == "eol":
+        pass
+    elif technique.lower() == "default":
+        pass
     else:
         print("Technique Doesn't Exist")
         sys.exit(1)
-        
-    # In unhide_mode
-    print("Retrieved Decryption Key:", key.hex())
-    print("Retrieved Nonce (IV):", iv.hex())
-    print("Retrieved Tag:", tag.hex())
-    print("Original Data (to be decrypted):", original_data.hex())
 
-
-
-    cipher = AES.new(key, AES.MODE_EAX, nonce=iv)
-    decrypted_data = cipher.decrypt_and_verify(original_data, tag)
-    print("Decrypted original data:", decrypted_data)
-
+    original_data = cipher.decrypt(encrypted_original_data)
+    decoded_text = original_data.decode('utf-8')
+    with open("output.txt", "w") as output_file:
+        output_file.write(decoded_text)
+    print("Data written to output.txt in original text form.")
     pass
 
 def wipe_file(file_path):
