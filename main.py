@@ -276,20 +276,28 @@ def hide_mode(steg_technique, path_of_data, number_of_files):
     # Call `process_text_file` with the data and `number_of_files`
     dctRead.process_text_file(ciphertext, number_of_files)
 
-    with open('order.txt', "w") as file:
-        for i, file_path in enumerate(list_of_used_files):
-            if i < len(list_of_used_files) - 1:
-                file.write(str(file_path) + ',')  # Convert Path to string
-            else:
-                file.write(str(file_path))  # Convert Path to string
-        file.close()
+    order_string = ','.join([str(file_path) for file_path in list_of_used_files])
+    order_cipher = AES.new(key, AES.MODE_EAX, nonce=iv)  # Using same key and IV for order encryption
+    encrypted_order, order_tag = order_cipher.encrypt_and_digest(order_string.encode())
 
-
+    with open('order.txt', 'wb') as file:
+        file.write(encrypted_order + b"||" + order_tag)  # Separator to differentiate data from tag
+    
     # wipe_file(path_of_data)
     # print(f"Data from {file_path} has been hidden and the original file securely wiped.")
 
 
-def unhide_mode(file_list_path, data_length):
+def unhide_mode(technique):
+    key, iv = reconstruct_key()
+    with open('order.txt', 'rb') as file:
+        encrypted_order_data = file.read()
+    
+    encrypted_order, order_tag = encrypted_order_data.split(b'||')  # Separate encrypted data and tag
+    order_cipher = AES.new(key, AES.MODE_EAX, nonce=iv)
+    order_string = order_cipher.decrypt_and_verify(encrypted_order, order_tag).decode()
+    ordered_files = order_string.split(',')
+    print(ordered_files)
+
     pass
 
 def wipe_file(file_path):
@@ -304,20 +312,20 @@ def wipe_file(file_path):
 # Main function
 def main():
     print(f"Arguments passed: {sys.argv}")
-    if len(sys.argv) < 4:
-        print("Usage for hide mode: python main.py hide <steg_technique> <data> <number of files>")
-        print("Usage for unhide mode: python main.py unhide <files>")
-        sys.exit(1)
-
     if sys.argv[1] == "hide":
+        if len(sys.argv) < 4:
+            print("Usage for hide mode: python main.py hide <steg_technique> <data> <number of files>")
+            sys.exit(1)
         print("Entering hide mode")
         hide_mode(sys.argv[2],sys.argv[3], sys.argv[4])
     elif sys.argv[1] == "unhide":
+        if len(sys.argv) < 2:
+            print("Usage for unhide mode: python main.py unhide <technique>")
+            sys.exit(1)
         print("Entering unhide mode")
         unhide_mode(sys.argv[2])
     else:
         print("Invalid mode. Use 'hide' or 'unhide'.")
-
 
 
 if __name__ == "__main__":
