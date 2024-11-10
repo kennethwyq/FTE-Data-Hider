@@ -310,7 +310,16 @@ def unhide_mode(technique):
     elif technique.lower() == "dct":
         pass
     elif technique.lower() == "eol":
-        pass
+        ordered_files = decrypted_order.split(',')
+        for file in ordered_files:
+            jpeg_file = str(path.absolute())+'\\'+ file
+            jpeg_bytes = eol.read_jpeg(jpeg_file)
+            eol_position = eol.eol_jpeg(jpeg_bytes)
+            hidden_data = eol.retrieve(jpeg_bytes, eol_position)
+            print(hidden_data)
+            encrypted_original_data += hidden_data
+            remove_data = eol.remove(jpeg_bytes, eol_position)
+            # overwrite(remove_data, jpeg_file)
     elif technique.lower() == "default":
         pass
     else:
