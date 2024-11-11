@@ -119,6 +119,7 @@ def extract_data_from_png(image_paths):
     # Print the extracted data in hexadecimal format for verification
     print("Extracted Data (Hex):")
     print(extracted_data.hex())
+    return extracted_data
 
 
 # Run the extraction script directly for unhiding more, 

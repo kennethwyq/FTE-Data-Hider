@@ -7,6 +7,7 @@ from binascii import hexlify, unhexlify
 from Cryptodome.Cipher import AES
 from Cryptodome.Random import get_random_bytes
 from Cryptodome.Protocol.SecretSharing import Shamir
+import shutil
 
 #Scripts
 import LSB.LSB as lsb
@@ -326,8 +327,27 @@ def unhide_mode(technique):
             encrypted_original_data += data
             #ads.delete_ads(file_path, "1")
     elif technique.lower() == "lsb":
+        ordered_files = decrypted_order.split(',')
+        for file in ordered_files:
+            file_path = str(path.absolute())+'\\'+ file
+            target_folder = file_path.parent.parent / "LSB"  # Move to the "LSB" folder in the same directory as "images"
+            if not target_folder.exists():
+                print(f"The target folder '{target_folder}' does not exist.")
+            else:
+                # Move the file if the folder exists
+                shutil.move(str(file_path), str(target_folder / file_path.name))
+                print(f"Moved {file_path} to {target_folder}")
+        encrypted_original_data = lsb.extract_data_from_png(ordered_files)
         pass
+
     elif technique.lower() == "dct":
+        ordered_files = decrypted_order.split(',')
+        for file in ordered_files:
+            file_path = str(path.absolute())+'\\'+ file
+            target_folder = file_path.parent.parent 
+            shutil.move(str(file_path), str(target_folder / file_path.name))
+            print(f"Moved {file_path} to {target_folder}")
+
         encrypted_original_data = dctDecode.main()
 
         pass
