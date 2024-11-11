@@ -164,23 +164,43 @@ def hide_mode(steg_technique, path_of_data, number_of_files):
     cipher = AES.new(key, AES.MODE_EAX, iv)
 
     ciphertext = cipher.encrypt(file_data)  # Continue using the same cipher instance
+    print("\nOriginal Data (Hex):")
+    print(hexlify(ciphertext))  # Print original data in hexadecimal
     splitted_data = split_byte_data(ciphertext, number_of_files)
     # Ensure `list_of_used_files` is limited to the number of data chunks
     list_of_used_files = []
-
+    
     if steg_technique.lower() == "lsb":
-        # Only use PNG files for LSB embedding
-        png_files = [file for file in list_of_used_files if file.suffix.lower() == '.png']
-        # Ensure we have enough PNG files for the data chunks
-        if len(png_files) < len(splitted_data):
-            print(f"Not enough PNG images to hide data. Required: {len(splitted_data)}, found: {len(png_files)}.")
-            sys.exit(1)
+        length_file = "LSB/lsb_data_length.txt"
+        # Calculate the total byte length of all chunks
+        total_data_length = sum(len(chunk) for chunk in splitted_data)
 
-        # Embed each chunk of data in separate PNG files using LSB
+        # Save the total length to `lsb_data_length.txt`
+        with open(length_file, 'w') as length_file_obj:
+            length_file_obj.write(str(total_data_length))
+        print(f"Total data length saved: {total_data_length} bytes")
+
+        # Retrieve available files from the "images" directory
+        # Choose the image to hide data in (for simplicity, we're using the first PNG file)
+        path = Path("images")
+        png_files = [file for file in path.iterdir() if file.suffix.lower() == '.png']
+    
+        if len(png_files) < len(splitted_data):
+            print(f"Not enough PNG images to hide data. Required: {len(splitted_data)}, available: {len(png_files)}.")
+            sys.exit(1)
+    
+            # Loop through each chunk and each file, hiding the data
         for i, data_chunk in enumerate(splitted_data):
-            file_path = png_files[i]
-            lsb.hide_data_in_png(str(file_path), data_chunk)
-            print(f"Data chunk embedded in {file_path}")
+            file_path = str(png_files[i])
+            list_of_used_files.append(file_path)  
+            # Hide the chunk in the current PNG file
+            print(f"Hiding data chunk in {file_path}")
+            lsb.hide_data_in_png(file_path, data_chunk)
+        #image_path = "images/sample.png"  # Use the specific image path here
+        #print(f"Hiding data chunk in {image_path}")
+        #lsb.hide_data_in_png(image_path, ciphertext)
+        #print("Data hidden successfully in the specified image.")
+        print("All data chunks have been hidden successfully.")
             # Hide the encrypted data in the image
             # hide_data_in_jpg(file, )
 
