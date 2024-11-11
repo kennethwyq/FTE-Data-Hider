@@ -93,18 +93,20 @@ def extract_data_from_png(image_path, data_length):
     print(f"Extracted Data (Hex): {extracted_data.hex()}")
     return extracted_data
 
-# Test the hiding and extraction functions
-try:
-    print("\n--- Hiding Data ---")
-    hide_data_in_png(image_path, secret_data)
-    
-    print("\n--- Extracting Data ---")
-    extracted_data = extract_data_from_png(image_path, len(secret_data))
-    
-    # Check if the extracted data matches the original secret data
-    if extracted_data == secret_data:
-        print("\nSuccess: Extracted data matches the original secret data!")
-    else:
-        print("\nFailure: Extracted data does not match the original secret data.")
-except Exception as e:
-    print("An error occurred:", e)
+
+if __name__ == "__main__":
+    # Test the hiding and extraction functions
+    try:
+        print("\n--- Hiding Data ---")
+        hide_data_in_png(image_path, secret_data)
+        
+        print("\n--- Extracting Data ---")
+        extracted_data = extract_data_from_png(image_path, len(secret_data))
+        
+        # Check if the extracted data matches the original secret data
+        if extracted_data == secret_data:
+            print("\nSuccess: Extracted data matches the original secret data!")
+        else:
+            print("\nFailure: Extracted data does not match the original secret data.")
+    except Exception as e:
+        print("An error occurred:", e)
