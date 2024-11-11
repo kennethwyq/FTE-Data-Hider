@@ -308,6 +308,8 @@ def unhide_mode(technique):
     elif technique.lower() == "lsb":
         pass
     elif technique.lower() == "dct":
+        encrypted_original_data = dctDecode.main()
+
         pass
     elif technique.lower() == "eol":
         ordered_files = decrypted_order.split(',')
