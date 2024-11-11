@@ -124,7 +124,7 @@ def extract_data_from_png(image_paths):
 # Run the extraction script directly for unhiding more, 
 # but remember to copy and paste the images folder files from main \FTE-Data-Hider\images
 if __name__ == "__main__":
-    image_paths = ["sample.png", "sample2.png", "sample3.png"]  # Specify your image paths here
+    image_paths = ["sample.png", "sample2.png"]  # Specify your image paths here
     extract_data_from_png(image_paths)
 
 
