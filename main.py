@@ -160,20 +160,13 @@ def hide_mode(steg_technique, path_of_data, number_of_files):
     with open(path_of_data, 'rb') as file:
         file_data = file.read()
 
-    cipher = AES.new(key, AES.MODE_EAX)
-    ciphertext, tag = cipher.encrypt_and_digest(file_data)
-    nonce = cipher.nonce
-
     path = Path("images") #TODO: let user choose which folder of files to use as hiding medium or default
-    
+    cipher = AES.new(key, AES.MODE_EAX, iv)
+
+    ciphertext = cipher.encrypt(file_data)  # Continue using the same cipher instance
     splitted_data = split_byte_data(ciphertext, number_of_files)
-
-    # Retrieve available files
-    list_of_used_files = [file for file in path.iterdir() if file.is_file()]
-
     # Ensure `list_of_used_files` is limited to the number of data chunks
-    list_of_used_files = list_of_used_files[:len(splitted_data)]
-
+    list_of_used_files = []
 
     if steg_technique.lower() == "lsb":
         # Only use PNG files for LSB embedding
@@ -275,21 +268,69 @@ def hide_mode(steg_technique, path_of_data, number_of_files):
 
     # Call `process_text_file` with the data and `number_of_files`
     dctRead.process_text_file(ciphertext, number_of_files)
-
-    with open('order.txt', "w") as file:
-        for i, file_path in enumerate(list_of_used_files):
-            if i < len(list_of_used_files) - 1:
-                file.write(str(file_path) + ',')  # Convert Path to string
-            else:
-                file.write(str(file_path))  # Convert Path to string
-        file.close()
-
-
+    
+    cipher = AES.new(key, AES.MODE_EAX, iv)
+    order = ','.join([str(file_path) for file_path in list_of_used_files])
+    order = order.encode()
+    encrypted_order = cipher.encrypt(order)
+    with open('order.txt', 'wb') as order_file:
+        order_file.write(encrypted_order)
+    print("Encrypted order saved to order.txt")
     # wipe_file(path_of_data)
     # print(f"Data from {file_path} has been hidden and the original file securely wiped.")
 
 
-def unhide_mode(file_list_path, data_length):
+def unhide_mode(technique):
+    key, iv = reconstruct_key()
+    cipher = AES.new(key, AES.MODE_EAX, iv)
+    path = Path("images") #TODO: let user choose which folder of files to use as hiding medium or default
+
+    try:
+        with open('order.txt', 'rb') as order_file:
+            encrypted_order = order_file.read()
+            decrypted_order = cipher.decrypt(encrypted_order)
+            print(decrypted_order)
+            decrypted_order = decrypted_order.decode()
+            print("Decrypted order:", decrypted_order)
+    except Exception as e:
+        print("Error decrypting order.txt:", e)
+        sys.exit(1)
+
+    encrypted_original_data = b""
+    if technique.lower() == "ads":
+        ordered_files = decrypted_order.split(',')
+        for file in ordered_files:
+            file_path = str(path.absolute())+'\\'+ file
+            print(file_path)
+            data = ads.read_ads(file_path, "1")
+            encrypted_original_data += data
+            #ads.delete_ads(file_path, "1")
+    elif technique.lower() == "lsb":
+        pass
+    elif technique.lower() == "dct":
+        pass
+    elif technique.lower() == "eol":
+        ordered_files = decrypted_order.split(',')
+        for file in ordered_files:
+            jpeg_file = str(path.absolute())+'\\'+ file
+            jpeg_bytes = eol.read_jpeg(jpeg_file)
+            eol_position = eol.eol_jpeg(jpeg_bytes)
+            hidden_data = eol.retrieve(jpeg_bytes, eol_position)
+            print(hidden_data)
+            encrypted_original_data += hidden_data
+            remove_data = eol.remove(jpeg_bytes, eol_position)
+            # overwrite(remove_data, jpeg_file)
+    elif technique.lower() == "default":
+        pass
+    else:
+        print("Technique Doesn't Exist")
+        sys.exit(1)
+    cipher = AES.new(key, AES.MODE_EAX, iv)
+    original_data = cipher.decrypt(encrypted_original_data)
+    decoded_text = original_data.decode('utf-8')
+    with open("output.txt", "w") as output_file:
+        output_file.write(decoded_text)
+    print("Data written to output.txt in original text form.")
     pass
 
 def wipe_file(file_path):
@@ -304,20 +345,20 @@ def wipe_file(file_path):
 # Main function
 def main():
     print(f"Arguments passed: {sys.argv}")
-    if len(sys.argv) < 4:
-        print("Usage for hide mode: python main.py hide <steg_technique> <data> <number of files>")
-        print("Usage for unhide mode: python main.py unhide <files>")
-        sys.exit(1)
-
     if sys.argv[1] == "hide":
+        if len(sys.argv) < 4:
+            print("Usage for hide mode: python main.py hide <steg_technique> <data> <number of files>")
+            sys.exit(1)
         print("Entering hide mode")
         hide_mode(sys.argv[2],sys.argv[3], sys.argv[4])
     elif sys.argv[1] == "unhide":
+        if len(sys.argv) < 2:
+            print("Usage for unhide mode: python main.py unhide <technique>")
+            sys.exit(1)
         print("Entering unhide mode")
         unhide_mode(sys.argv[2])
     else:
         print("Invalid mode. Use 'hide' or 'unhide'.")
-
 
 
 if __name__ == "__main__":
