@@ -4,18 +4,14 @@ import struct
 import bitstring
 import numpy as np
 import glob
-import os
+
 
 # Files
 import DCT.a_read as main
 import DCT.b_dct as dct
 import DCT.c_embed_extract as encode
 import DCT.d_zigzag as zigzag
-import main as central
 
-def write_to_text_file(secret_message, output_file="extracted_messages.txt"):
-    with open(output_file, 'a') as file:
-        file.write(secret_message + "\n")
 
 def format_extracted_data(extracted_data):
     # Convert each byte in extracted_data to the \xHH format and join them
@@ -71,8 +67,7 @@ def extract_secret_message_from_stego(STEGO_IMAGE_FILEPATH):
     #print(f"Decoded secret message: {decoded_message}")
     return formatted_data
 
-
-if __name__ == "__main__":
+def main():
     # Define the directory to search for .jpg images outside the 'image' folder
     search_directory = ".."  # Assuming you want to search one level up from this script's location
 
@@ -87,16 +82,11 @@ if __name__ == "__main__":
             try:
                 secret_message = extract_secret_message_from_stego(image_path)
                 print(f"Extracted Secret Message from {image_path}: {secret_message}\n")
-
-                # Write the secret message to a text file
-                write_to_text_file("../" + secret_message)
-
-                # Securely delete the image file after extraction
-                central.wipe_file(image_path)
-                os.remove(image_path)  # Remove the file after wiping
-                print(f"{image_path} has been securely deleted.\n")
-
             except Exception as e:
                 print(f"An error occurred during extraction from {image_path}: {e}")
     else:
         print("No .jpg files found outside the 'image' folder.")
+
+
+if __name__ == "__main__":
+    main()
