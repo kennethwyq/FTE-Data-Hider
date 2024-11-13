@@ -7,7 +7,7 @@ from binascii import hexlify
 #secret_data =b'123'
 # Set up a sample PNG file path (ensure the image exists at this path or create one if needed)
 #image_path = "test_image.png"
-length_file = "lsb_data_length.txt"  
+length_file = "lsb\lsb_data_length.txt"  
 
 
 # Check if the image file exists, otherwise create a simple RGB image to test
