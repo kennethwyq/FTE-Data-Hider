@@ -278,7 +278,6 @@ def hide_mode(steg_technique, path_of_data, number_of_files):
             dctRead.embed_secret_message_into_image(file_path, data, list_of_used_files_DCT[i])
 
         if len(list_of_used_files_ADS) != len(chunks_ADS):
-            print(list_of_used_files_ADS)
             print(f"Not enough images to be used. Number of images for ADS needed is {len(chunks_ADS)}.")
             sys.exit(1)
         for i in range(len(chunks_ADS)):
@@ -287,6 +286,7 @@ def hide_mode(steg_technique, path_of_data, number_of_files):
             stream_name = '1'
             # Hide the encrypted data in the image
             ads.write_ads(data, file_path, stream_name)
+        list_of_used_files = list_of_used_files_DCT + list_of_used_files_ADS
         pass
 
     # Call `process_text_file` with the data and `number_of_files`
@@ -375,8 +375,9 @@ def unhide_mode(technique):
                 shutil.move(str(file_path), str(target_folder / file_path.name))
                 print(f"Moved {file_path} to {target_folder}")
         encrypted_original_data_pt1 = dctDecode.main()
-
+        ordered_files = decrypted_order.split(',')
         for file in ordered_files:
+            print(file)
             if(Path(file).suffix not in [".jpg"]):
                 file_path = str(path.absolute())+'\\'+ file
                 print(file_path)
