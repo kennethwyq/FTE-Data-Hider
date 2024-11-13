@@ -262,7 +262,7 @@ def hide_mode(steg_technique, path_of_data, number_of_files):
         # Split the ciphertext into chunks of 32 bytes each
         split_point = (number_of_files + 1) // 2 
         chunks_DCT = splitted_data[:split_point]
-        chunks_ADS = ciphertext[split_point:]
+        chunks_ADS = splitted_data[split_point:]
         list_of_used_files_DCT = [file.name for file in path.iterdir() if file.is_file() and file.suffix in ['.jpg']]
         list_of_used_files_ADS = [file.name for file in path.iterdir() if file.is_file() and file.suffix not in ['.jpg']]
         list_of_used_files_DCT = list_of_used_files_DCT[:split_point]
