@@ -1,7 +1,7 @@
 # FTE-Data-Hider
 ## Description
 
-A Python-based tool for data hiding and extraction using steganography techniques. This project implements various steganography methods to securely hide and retrieve data within files.
+The FTE data hider is designed to be an anti-forensics tool by combining encryption, steganography techniques, and secure data erasure to hinder forensics recovery efforts. It uses encryption on the data as the first layer of protection, then employs various steganography techniques to hide data across multiple files and file types, making recovery of data harder. It incorporates a secure data erasure technique to prevent the original data from being recovered, thereby hindering the forensics recovery effort.
 
 ## Installation
 
@@ -71,11 +71,3 @@ Example:
 python main.py unhide ads
 ```
 
-## Features
-
-- Multiple steganography techniques implementation
-- Support for various file formats
-- Secure data hiding and extraction
-- Command-line interface for easy usage
-
-## Contributing
