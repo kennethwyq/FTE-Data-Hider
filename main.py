@@ -265,7 +265,7 @@ def hide_mode(steg_technique, path_of_data, number_of_files):
         list_of_used_files_DCT = [file.name for file in path.iterdir() if file.is_file() and file.suffix in ['.jpg']]
         list_of_used_files_ADS = [file.name for file in path.iterdir() if file.is_file() and file.suffix.lower() != '.jpg']
         list_of_used_files_DCT = list_of_used_files_DCT[:split_point]
-        list_of_used_files_ADS = list_of_used_files_ADS[split_point:]
+        list_of_used_files_ADS = list_of_used_files_ADS[:split_point]
 
         if len(list_of_used_files_DCT) != len(chunks_DCT):
             print(f"Not enough images to be used. Number of images for DCT needed is {len(chunks_DCT)}.")
@@ -278,7 +278,7 @@ def hide_mode(steg_technique, path_of_data, number_of_files):
             dctRead.embed_secret_message_into_image(file_path, data, list_of_used_files_DCT[i])
 
         if len(list_of_used_files_ADS) != len(chunks_ADS):
-            
+            print(list_of_used_files_ADS)
             print(f"Not enough images to be used. Number of images for ADS needed is {len(chunks_ADS)}.")
             sys.exit(1)
         for i in range(len(chunks_ADS)):
@@ -369,7 +369,7 @@ def unhide_mode(technique):
 
         ordered_files = decrypted_order.split(',')
         for file in ordered_files:
-            if(file.suffix in [".jpg"]):
+            if(Path(file).suffix in [".jpg"]):
                 file_path = Path(str(path.absolute())+'\\'+ file)
                 target_folder = file_path.parent.parent 
                 shutil.move(str(file_path), str(target_folder / file_path.name))
@@ -377,7 +377,7 @@ def unhide_mode(technique):
         encrypted_original_data_pt1 = dctDecode.main()
 
         for file in ordered_files:
-            if(file.suffix not in [".jpg"]):
+            if(Path(file).suffix not in [".jpg"]):
                 file_path = str(path.absolute())+'\\'+ file
                 print(file_path)
                 data = ads.read_ads(file_path, "1")
