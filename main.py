@@ -329,7 +329,7 @@ def unhide_mode(technique):
     elif technique.lower() == "lsb":
         ordered_files = decrypted_order.split(',')
         for file in ordered_files:
-            file_path = str(path.absolute())+'\\'+ file
+            file_path = Path(str(path.absolute())+'\\'+ file)
             target_folder = file_path.parent.parent / "LSB"  # Move to the "LSB" folder in the same directory as "images"
             if not target_folder.exists():
                 print(f"The target folder '{target_folder}' does not exist.")
@@ -343,7 +343,7 @@ def unhide_mode(technique):
     elif technique.lower() == "dct":
         ordered_files = decrypted_order.split(',')
         for file in ordered_files:
-            file_path = str(path.absolute())+'\\'+ file
+            file_path = Path(str(path.absolute())+'\\'+ file)
             target_folder = file_path.parent.parent 
             shutil.move(str(file_path), str(target_folder / file_path.name))
             print(f"Moved {file_path} to {target_folder}")
