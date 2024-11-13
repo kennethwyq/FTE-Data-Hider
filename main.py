@@ -259,12 +259,11 @@ def hide_mode(steg_technique, path_of_data, number_of_files):
 
 
     elif steg_technique.lower() =="default":
-        # Split the ciphertext into chunks of 32 bytes each
         split_point = (number_of_files + 1) // 2 
         chunks_DCT = splitted_data[:split_point]
         chunks_ADS = splitted_data[split_point:]
         list_of_used_files_DCT = [file.name for file in path.iterdir() if file.is_file() and file.suffix in ['.jpg']]
-        list_of_used_files_ADS = [file.name for file in path.iterdir() if file.is_file() and file.suffix not in ['.jpg']]
+        list_of_used_files_ADS = [file.name for file in path.iterdir() if file.is_file() and file.suffix.lower() != '.jpg']
         list_of_used_files_DCT = list_of_used_files_DCT[:split_point]
         list_of_used_files_ADS = list_of_used_files_ADS[split_point:]
 
@@ -279,6 +278,7 @@ def hide_mode(steg_technique, path_of_data, number_of_files):
             dctRead.embed_secret_message_into_image(file_path, data, list_of_used_files_DCT[i])
 
         if len(list_of_used_files_ADS) != len(chunks_ADS):
+            
             print(f"Not enough images to be used. Number of images for ADS needed is {len(chunks_ADS)}.")
             sys.exit(1)
         for i in range(len(chunks_ADS)):
@@ -287,18 +287,6 @@ def hide_mode(steg_technique, path_of_data, number_of_files):
             stream_name = '1'
             # Hide the encrypted data in the image
             ads.write_ads(data, file_path, stream_name)
-
-
-
-        files_ADS = list_of_used_files[split_point:]
-        if len(files_ADS) < len(splitted_data_ADS):
-            print(f"Not enough files for ADS steganography. Needed: {len(splitted_data_ADS)}")
-            sys.exit(1)
-        for data_chunk in splitted_data_ADS:
-            random_index = random.randint(0, len(files_ADS) - 1)
-            file = files_ADS.pop(random_index)
-            list_of_used_files.append(file)
-            # Hide the encrypted data chunk in the file using ADS
         pass
 
     # Call `process_text_file` with the data and `number_of_files`
