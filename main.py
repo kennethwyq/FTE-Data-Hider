@@ -261,20 +261,34 @@ def hide_mode(steg_technique, path_of_data, number_of_files):
     elif steg_technique.lower() =="default":
         # Split the ciphertext into chunks of 32 bytes each
         split_point = (number_of_files + 1) // 2 
-        half = len(ciphertext) // 2
-        chunks_DCT = ciphertext[:half]
-        chunks_ADS = ciphertext[half:]
-        splitted_data_DCT = [chunks_DCT[i:i + 32] for i in range(0, len(chunks_DCT), 32)]
-        splitted_data_ADS = [chunks_ADS[i:i + 32] for i in range(0, len(chunks_ADS), 32)]
-        files_LSB = list_of_used_files[:split_point]
-        if len(files_LSB) < len(splitted_data_DCT):
-            print(f"Not enough images for LSB steganography. Needed: {len(splitted_data_DCT)}")
+        chunks_DCT = splitted_data[:split_point]
+        chunks_ADS = ciphertext[split_point:]
+        list_of_used_files_DCT = [file.name for file in path.iterdir() if file.is_file() and file.suffix in ['.jpg']]
+        list_of_used_files_ADS = [file.name for file in path.iterdir() if file.is_file() and file.suffix not in ['.jpg']]
+        list_of_used_files_DCT = list_of_used_files_DCT[:split_point]
+        list_of_used_files_ADS = list_of_used_files_ADS[split_point:]
+
+        if len(list_of_used_files_DCT) != len(chunks_DCT):
+            print(f"Not enough images to be used. Number of images for DCT needed is {len(chunks_DCT)}.")
             sys.exit(1)
-        for data_chunk in splitted_data_DCT:
-            random_index = random.randint(0, len(files_LSB) - 1)
-            file = files_LSB.pop(random_index)
-            list_of_used_files.append(file)
-            # Hide the encrypted data chunk in the image using LSB
+        for i in range(len(chunks_DCT)):
+            data = chunks_DCT[i]
+            file_path = str(path.absolute()) + '\\' + list_of_used_files_DCT[i]
+            # Hide the encrypted data in the image
+            # hide_data_in_png(file, )
+            dctRead.embed_secret_message_into_image(file_path, data, list_of_used_files_DCT[i])
+
+        if len(list_of_used_files_ADS) != len(chunks_ADS):
+            print(f"Not enough images to be used. Number of images for ADS needed is {len(chunks_ADS)}.")
+            sys.exit(1)
+        for i in range(len(chunks_ADS)):
+            data = chunks_ADS[i]
+            file_path = str(path.absolute())+'\\'+ list_of_used_files_ADS[i]
+            stream_name = '1'
+            # Hide the encrypted data in the image
+            ads.write_ads(data, file_path, stream_name)
+
+
 
         files_ADS = list_of_used_files[split_point:]
         if len(files_ADS) < len(splitted_data_ADS):
@@ -349,7 +363,6 @@ def unhide_mode(technique):
             print(f"Moved {file_path} to {target_folder}")
 
         encrypted_original_data = dctDecode.main()
-
         pass
     elif technique.lower() == "eol":
         ordered_files = decrypted_order.split(',')
@@ -363,6 +376,26 @@ def unhide_mode(technique):
             remove_data = eol.remove(jpeg_bytes, eol_position)
             # overwrite(remove_data, jpeg_file)
     elif technique.lower() == "default":
+        encrypted_original_data_pt1 = b""
+        encrypted_original_data_pt2 = b""
+
+        ordered_files = decrypted_order.split(',')
+        for file in ordered_files:
+            if(file.suffix in [".jpg"]):
+                file_path = Path(str(path.absolute())+'\\'+ file)
+                target_folder = file_path.parent.parent 
+                shutil.move(str(file_path), str(target_folder / file_path.name))
+                print(f"Moved {file_path} to {target_folder}")
+        encrypted_original_data_pt1 = dctDecode.main()
+
+        for file in ordered_files:
+            if(file.suffix not in [".jpg"]):
+                file_path = str(path.absolute())+'\\'+ file
+                print(file_path)
+                data = ads.read_ads(file_path, "1")
+                encrypted_original_data_pt2 += data
+
+        encrypted_original_data = encrypted_original_data_pt1 + encrypted_original_data_pt2
         pass
     else:
         print("Technique Doesn't Exist")
