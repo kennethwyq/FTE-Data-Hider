@@ -7,8 +7,8 @@ def embed_encoded_data_dct(encoded_bits, dct_blocks):
     encoded_bits.bitpos = 0  # Use bitpos instead of pos
     encoded_data_length = bitstring.pack('uint:32', len(encoded_bits))
 
-    print(f"Encoded data length (bits): {len(encoded_bits)}")
-    print(f"Encoded data length (packed): {encoded_data_length.bin}")
+    # print(f"Encoded data length (bits): {len(encoded_bits)}")
+    # print(f"Encoded data length (packed): {encoded_data_length.bin}")
 
     converted_blocks = []
 
@@ -31,7 +31,7 @@ def embed_encoded_data_dct(encoded_bits, dct_blocks):
                     pack_coefficient[-1] = bit  # Embed the data bit
 
                 # Debugging print
-                print(f"Embedding bit: {bit}")
+                #print(f"Embedding bit: {bit}")
 
                 # Replace converted coefficient
                 current_dct_block[i] = np.float32(pack_coefficient.read('uint:8'))
@@ -49,10 +49,11 @@ def extract_encoded_data_dct(dct_blocks):
         for i in range(1, len(current_dct_block)):
             current_coefficient = np.int32(current_dct_block[i])
             if current_coefficient > 1:
-                bit = np.uint8(current_dct_block[i]) & 0x01  # Extract the LSB
-                extracted_data.append('0b' + str(bit))
+                #bit = np.uint8(current_dct_block[i]) & 0x01  # Extract the LSB
+                extracted_data += bitstring.pack('uint:1', np.uint8(current_dct_block[i]) & 0x01)
+                #extracted_data.append('0b' + str(bit))
                 # Debugging print
-                print(f"Extracted bit: {bit}")
+                #print(f"Extracted bit: {bit}")
     return extracted_data
 
 

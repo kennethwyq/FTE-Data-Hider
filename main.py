@@ -150,7 +150,8 @@ def split_byte_data(data, num_parts):
     
     return parts
 
-# Encrypt and hide data in PNG
+
+# Encrypt and hide data in PNG & JPG
 def hide_mode(steg_technique, path_of_data, number_of_files):
     if not check_registry_for_key():
         key, iv = generate_secret_key()
@@ -197,39 +198,35 @@ def hide_mode(steg_technique, path_of_data, number_of_files):
             # Hide the chunk in the current PNG file
             print(f"Hiding data chunk in {file_path}")
             lsb.hide_data_in_png(file_path, data_chunk)
-        #image_path = "images/sample.png"  # Use the specific image path here
-        #print(f"Hiding data chunk in {image_path}")
-        #lsb.hide_data_in_png(image_path, ciphertext)
-        #print("Data hidden successfully in the specified image.")
+
         print("All data chunks have been hidden successfully.")
-            # Hide the encrypted data in the image
-            # hide_data_in_jpg(file, )
 
         
     elif steg_technique.lower() == "dct":
-        #TODO: Eddie
         # List comprehension to retrieve file names
         list_of_used_files = [file.name for file in path.iterdir() if file.is_file() and file.suffix in ['.jpg']]
         list_of_used_files = list_of_used_files[:len(splitted_data)]
+
         if len(list_of_used_files) != len(splitted_data):
             print(f"Not enough images to be used. Number of images needed is {len(splitted_data)}.")
             sys.exit(1)
+
         for i in range(len(splitted_data)):
             data = splitted_data[i]
             file_path = str(path.absolute()) + '\\' + list_of_used_files[i]
-            # Hide the encrypted data in the image
-            # hide_data_in_png(file, )
             dctRead.embed_secret_message_into_image(file_path, data, list_of_used_files[i])
 
+        print("All data chunks have been hidden successfully.")
 
     elif steg_technique.lower() == "ads":
-        #TODO: Eric
         # List comprehension to retrieve file names
         list_of_used_files = [file.name for file in path.iterdir() if file.is_file()]
         list_of_used_files = list_of_used_files[:len(splitted_data)]
+
         if len(list_of_used_files) != len(splitted_data):
             print(f"Not enough images to be used. Number of images needed is {len(splitted_data)}.")
             sys.exit(1)
+
         for i in range(len(splitted_data)):
             data = splitted_data[i]
             file_path = str(path.absolute())+'\\'+ list_of_used_files[i]
@@ -239,15 +236,16 @@ def hide_mode(steg_technique, path_of_data, number_of_files):
 
 
     elif steg_technique.lower() == "eol":
-        # TODO: Eric
         # List comprehension to retrieve file names
         list_of_used_files = [file.name for file in path.iterdir() if file.is_file() and file.suffix == '.jpeg']
         list_of_used_files = list_of_used_files[:len(splitted_data)]
         print(len(list_of_used_files))
         print(len(splitted_data))
+
         if len(list_of_used_files) != len(splitted_data):
             print(f"Not enough images to be used. Number of images needed is {len(splitted_data)}.")
             sys.exit(1)
+
         for i in range(len(splitted_data)):
             data = splitted_data[i]
             file_path = str(path.absolute()) + '\\' + list_of_used_files[i]
@@ -270,6 +268,7 @@ def hide_mode(steg_technique, path_of_data, number_of_files):
         if len(list_of_used_files_DCT) != len(chunks_DCT):
             print(f"Not enough images to be used. Number of images for DCT needed is {len(chunks_DCT)}.")
             sys.exit(1)
+
         for i in range(len(chunks_DCT)):
             data = chunks_DCT[i]
             file_path = str(path.absolute()) + '\\' + list_of_used_files_DCT[i]
@@ -280,6 +279,7 @@ def hide_mode(steg_technique, path_of_data, number_of_files):
         if len(list_of_used_files_ADS) != len(chunks_ADS):
             print(f"Not enough images to be used. Number of images for ADS needed is {len(chunks_ADS)}.")
             sys.exit(1)
+
         for i in range(len(chunks_ADS)):
             data = chunks_ADS[i]
             file_path = str(path.absolute())+'\\'+ list_of_used_files_ADS[i]
@@ -289,9 +289,6 @@ def hide_mode(steg_technique, path_of_data, number_of_files):
         list_of_used_files = list_of_used_files_DCT + list_of_used_files_ADS
         pass
 
-    # Call `process_text_file` with the data and `number_of_files`
-    dctRead.process_text_file(ciphertext, number_of_files)
-    
     cipher = AES.new(key, AES.MODE_EAX, iv)
     order = ','.join([str(file_path) for file_path in list_of_used_files])
     order = order.encode()
@@ -315,11 +312,13 @@ def unhide_mode(technique):
             print(decrypted_order)
             decrypted_order = decrypted_order.decode()
             print("Decrypted order:", decrypted_order)
+
     except Exception as e:
         print("Error decrypting order.txt:", e)
         sys.exit(1)
 
     encrypted_original_data = b""
+
     if technique.lower() == "ads":
         ordered_files = decrypted_order.split(',')
         for file in ordered_files:
@@ -327,12 +326,13 @@ def unhide_mode(technique):
             print(file_path)
             data = ads.read_ads(file_path, "1")
             encrypted_original_data += data
-            #ads.delete_ads(file_path, "1")
+
     elif technique.lower() == "lsb":
         ordered_files = decrypted_order.split(',')
         for file in ordered_files:
             file_path = Path(str(path.absolute())+'\\'+ file)
             target_folder = file_path.parent.parent / "LSB"  # Move to the "LSB" folder in the same directory as "images"
+
             if not target_folder.exists():
                 print(f"The target folder '{target_folder}' does not exist.")
             else:
@@ -345,13 +345,14 @@ def unhide_mode(technique):
     elif technique.lower() == "dct":
         ordered_files = decrypted_order.split(',')
         for file in ordered_files:
-            file_path = Path(str(path.absolute())+'\\'+ file)
-            target_folder = file_path.parent.parent 
-            shutil.move(str(file_path), str(target_folder / file_path.name))
+            file_path = Path(path.absolute()) / file  # Convert to a Path object
+            target_folder = file_path.parent.parent  # Access the parent.parent attribute
+            shutil.move(str(file_path), str(target_folder / file_path.name))  # Use Path for consistency
             print(f"Moved {file_path} to {target_folder}")
 
         encrypted_original_data = dctDecode.main()
         pass
+
     elif technique.lower() == "eol":
         ordered_files = decrypted_order.split(',')
         for file in ordered_files:
@@ -363,6 +364,7 @@ def unhide_mode(technique):
             encrypted_original_data += hidden_data
             remove_data = eol.remove(jpeg_bytes, eol_position)
             # overwrite(remove_data, jpeg_file)
+
     elif technique.lower() == "default":
         encrypted_original_data_pt1 = b""
         encrypted_original_data_pt2 = b""
@@ -389,13 +391,20 @@ def unhide_mode(technique):
     else:
         print("Technique Doesn't Exist")
         sys.exit(1)
+
     cipher = AES.new(key, AES.MODE_EAX, iv)
+
     original_data = cipher.decrypt(encrypted_original_data)
+    print(f'the original data is {original_data}')
+
     decoded_text = original_data.decode('utf-8')
+    print(f'the decoded data is {decoded_text}')
+
     with open("output.txt", "w") as output_file:
         output_file.write(decoded_text)
     print("Data written to output.txt in original text form.")
     pass
+
 
 def wipe_file(file_path):
     with open(file_path, 'r+b') as file:

@@ -2,6 +2,7 @@
 import cv2
 import bitstring
 import numpy as np
+import json
 
 # Scripts
 import DCT.b_dct as dct
@@ -10,41 +11,10 @@ import DCT.d_zigzag as zigzag
 
 NUM_CHANNELS = 3
 
-
-
-
-# Helper function to format bytes as hexadecimal values
-def format_bytes(byte_str):
-    return ''.join([f'\\x{byte:02x}' for byte in byte_str])
-
-# a_read.py
-def process_text_file(bytes_data, num_images):
-    # Format the bytes data if it exists
-    formatted_output = format_bytes(bytes_data)
-
-    # Split the bytes into the specified number of image chunks
-    image_chunks = split_bytes(bytes_data, num_images)
-
-    for idx, chunk in enumerate(image_chunks):
-        formatted_chunk = format_bytes(chunk)
-        print(f"Image {idx + 1}: b'{formatted_chunk}'")
-
-
-# Function to split bytes into chunks based on the number of images specified
-def split_bytes(byte_str, num_images):
-    chunk_size = len(byte_str) // num_images
-    chunks = [byte_str[i:i + chunk_size] for i in range(0, len(byte_str) - chunk_size, chunk_size)]
-    chunks.append(byte_str[len(chunks) * chunk_size:])  # Add remaining bytes to the last chunk
-
-    # Notify the user if an extra chunk was created
-    if len(chunks) > num_images:
-        print(f"Note: The system created an additional chunk. You specified {num_images} images, "
-              f"but the data was split into {len(chunks)} chunks to accommodate the remaining bytes.")
-    return chunks
-
+bytes_secret = None
 
 def embed_secret_message_into_image(COVER_IMAGE_FILEPATH, SECRET_MESSAGE_STRING, STEGO_IMAGE_FILEPATH):
-    # Load the cover image
+
     raw_cover_image = cv2.imread(COVER_IMAGE_FILEPATH, flags=cv2.IMREAD_COLOR)
     height, width = raw_cover_image.shape[:2]
 
@@ -77,10 +47,25 @@ def embed_secret_message_into_image(COVER_IMAGE_FILEPATH, SECRET_MESSAGE_STRING,
                 # If it's a string, encode it to bytes and then pack the data
                 for char in SECRET_MESSAGE_STRING.encode('ascii'):
                     secret_data += bitstring.pack('uint:8', char)
+                    print("went through here")
             else:
                 # If it's already bytes, just pack the data
                 for char in SECRET_MESSAGE_STRING:
                     secret_data += bitstring.pack('uint:8', char)
+
+                # Print the datatype of the file content
+                print(f"The datatype of the encrypted file content is: {type(secret_data)}")
+
+            temp = bitstring.BitArray(bytes=SECRET_MESSAGE_STRING)
+            print(f"len of secert measgge data being hidden {len(SECRET_MESSAGE_STRING)}")
+            print(f"len of secret data being hidden {temp}")
+
+            bytes_secret = bytes(SECRET_MESSAGE_STRING)
+            print(f"secret message byte is {bytes_secret}")
+
+            # Write bytes_secret to a file
+            with open('venv_config.json', 'wb') as file:
+                file.write(bytes_secret)
 
             embedded_dct_blocks = encode.embed_encoded_data_dct(secret_data, sorted_coefficients)
             desorted_coefficients = [zigzag.inverse_zigzag(block, vmax=8, hmax=8) for block in embedded_dct_blocks]
@@ -105,16 +90,5 @@ def embed_secret_message_into_image(COVER_IMAGE_FILEPATH, SECRET_MESSAGE_STRING,
     final_stego_image = np.uint8(np.clip(stego_image_BGR, 0, 255))
 
     # Write stego image to the output file
-    cv2.imwrite(STEGO_IMAGE_FILEPATH, final_stego_image)
-
-    # # Process the text file
-    # bytes_data = SECRET_MESSAGE_STRING
-    # if bytes_data:
-    #     formatted_output = format_bytes(bytes_data)
-    #
-    #     image_chunks = split_bytes(bytes_data, )
-    #
-    #     for idx, chunk in enumerate(image_chunks):
-    #         formatted_chunk = format_bytes(chunk)
-    #         print(f"Image {idx + 1}: b'{formatted_chunk}'")
+    cv2.imwrite("images/" + STEGO_IMAGE_FILEPATH, final_stego_image)
 

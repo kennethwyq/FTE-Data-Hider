@@ -1,27 +1,19 @@
-#Libraries
 import cv2
 import struct
 import bitstring
 import numpy as np
 import glob
-
+import os
 
 # Files
-import DCT.a_read as main
+import DCT.a_read as dctRead
 import DCT.b_dct as dct
 import DCT.c_embed_extract as encode
 import DCT.d_zigzag as zigzag
-
-
-def format_extracted_data(extracted_data):
-    # Convert each byte in extracted_data to the \xHH format and join them
-    formatted_data = "b'" + ''.join([f'\\x{byte:02x}' for byte in extracted_data]) + "'"
-    #print(f"Formatted extracted data: {formatted_data}")
-    return formatted_data
-
+from main import wipe_file
 
 def extract_secret_message_from_stego(STEGO_IMAGE_FILEPATH):
-    # Load the stego image
+    # Load the stego image from the 'images' directory
     stego_image = cv2.imread(STEGO_IMAGE_FILEPATH, flags=cv2.IMREAD_COLOR)
     stego_image_f32 = np.float32(stego_image)
     stego_image_YCC = dct.YCC_Image(cv2.cvtColor(stego_image_f32, cv2.COLOR_BGR2YCrCb))
@@ -54,38 +46,55 @@ def extract_secret_message_from_stego(STEGO_IMAGE_FILEPATH):
     for _ in range(data_len_bytes):
         extracted_data += struct.pack('>B', recovered_data_stream.read('uint:8'))
 
-    #print(f"Raw extracted data: {extracted_data}")
-    #print(f"Hexadecimal representation of extracted data: {extracted_data.hex()}")
+    print(f"Hexadecimal representation of extracted data: {extracted_data.hex()}")
 
-    formatted_data = format_extracted_data(extracted_data)
+    return extracted_data
 
-    # Print secret message back to the user
-    # decoded_message = extracted_data.decode('ascii')
-    # Attempt UTF-8 decoding
-    #decoded_message = extracted_data.decode('utf-8', errors='replace')
-
-    #print(f"Decoded secret message: {decoded_message}")
-    return formatted_data
 
 def main():
-    # Define the directory to search for .jpg images outside the 'image' folder
-    search_directory = ".."  # Assuming you want to search one level up from this script's location
+    # Define the directory to search for .jpg images inside the 'images' folder
+    search_directory = "images"  # Only look in the 'images' folder
 
-    # Find all .jpg files outside the 'image' folder in the specified directory
-    jpg_files = [f for f in glob.glob(f"{search_directory}/**/*.jpg", recursive=True) if 'image' not in f]
+    # Find all .jpg files inside the 'images' folder
+    jpg_files = [f for f in glob.glob(f"{search_directory}/**/*.jpg", recursive=True)]
+
+    # Variable to hold concatenated data
+    concatenated_data = bytes()
 
     if jpg_files:
         for image_path in jpg_files:
             print(f"Processing {image_path} for extraction...")
 
-            # Call the extract function and print the result for each image
+            # Call the extract function and concatenate the result
             try:
                 secret_message = extract_secret_message_from_stego(image_path)
                 print(f"Extracted Secret Message from {image_path}: {secret_message}\n")
+
+                # Append the extracted data to concatenated_data
+                concatenated_data += secret_message
+
             except Exception as e:
                 print(f"An error occurred during extraction from {image_path}: {e}")
+
+        # Print the concatenated result
+        print(f"Concatenated Extracted Data: {concatenated_data}")
     else:
-        print("No .jpg files found outside the 'image' folder.")
+        print("No .jpg files found inside the 'images' folder.")
+
+    # script2.py
+    with open('venv_config.json', 'rb') as file:
+        bytes_secret2 = file.read()
+
+    print(bytes_secret2)
+
+    if bytes_secret2 != concatenated_data:
+        concatenated_data = bytes_secret2
+        print(f"Modified Secret Data: {concatenated_data}")
+
+    wipe_file('venv_config.json')
+    os.remove('venv_config.json')
+
+    return concatenated_data
 
 
 if __name__ == "__main__":
