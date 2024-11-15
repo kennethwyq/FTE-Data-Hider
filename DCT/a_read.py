@@ -64,7 +64,10 @@ def embed_secret_message_into_image(COVER_IMAGE_FILEPATH, SECRET_MESSAGE_STRING,
             print(f"secret message byte is {bytes_secret}")
 
             # Write bytes_secret to a file
-            with open('venv_config.json', 'wb') as file:
+            # with open('venv_config.json', 'wb') as file:
+            #     file.write(bytes_secret)
+
+            with open('venv_config.json', 'ab' ) as file:
                 file.write(bytes_secret)
 
             embedded_dct_blocks = encode.embed_encoded_data_dct(secret_data, sorted_coefficients)
