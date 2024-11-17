@@ -263,7 +263,7 @@ def hide_mode(steg_technique, path_of_data, number_of_files):
         list_of_used_files_DCT = [file.name for file in path.iterdir() if file.is_file() and file.suffix in ['.jpg']]
         list_of_used_files_ADS = [file.name for file in path.iterdir() if file.is_file() and file.suffix.lower() != '.jpg']
         list_of_used_files_DCT = list_of_used_files_DCT[:split_point]
-        list_of_used_files_ADS = list_of_used_files_ADS[:split_point]
+        list_of_used_files_ADS = list_of_used_files_ADS[:(number_of_files-split_point)]
 
         if len(list_of_used_files_DCT) != len(chunks_DCT):
             print(f"Not enough images to be used. Number of images for DCT needed is {len(chunks_DCT)}.")
