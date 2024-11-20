@@ -296,8 +296,8 @@ def hide_mode(steg_technique, path_of_data, number_of_files):
     with open('order.txt', 'wb') as order_file:
         order_file.write(encrypted_order)
     print("Encrypted order saved to order.txt")
-    # wipe_file(path_of_data)
-    # print(f"Data from {file_path} has been hidden and the original file securely wiped.")
+    wipe_file(path_of_data)
+    print(f"Data from {file_path} has been hidden and the original file securely wiped.")
 
 
 def unhide_mode(technique):
